@@ -1,17 +1,48 @@
 # CussBot
 
-CussBot is a Reddit bot project I have created to search through Reddit comments for various swear words. Upon finding such a comment, the bot will check if the user has been evaluated before, and will reply to their comment to let them know what percentage of their words are swear words, and how they compare to the average.
+Cussbot looks on Reddit for comments with swear words in them. It analyzes the comment
+and additional comments made by the user for swearing statistics and saves this information 
+to a database. This information is anonymous as per below. 
+
+# Anonymous Data
+
+The only information stored permanently are the username to prevent duplicate analysis, 
+and the resulting statistics. Comments are not stored as this would be redundant.
 
 ## Procedure
 
-Upon finding a swear word, the user's comment history is evaluated to determine what percentage of all of their words used are swear words. Once this is done, the bot stores the username and the percentage of their words which are swear words in the database. 
+1. Bot scans Subreddits which are specified earlier during the day. 
+2. Finds comments with swear words. 
+3. Analyzes comment statistics for use in later optional steps.
+4. Analyzes user's comment history. **See Analysis for more information**
+5. Replies to the user with any outstanding statistics.
 
-The bot then replies to the comment with the number of swear words in their comment, the swear word they used, and how they compare to the Reddit average. 
+Optional step 1. **Needs expansion:** Bot calculates which comment has the highest percentage of swearwords and the largest number
+of swearwords. 
+
+Optional Step 2. Bot replies to this comment declaring it the daily winner.
+
+## Comment Analysis
+
+Cussbot scans the user's comment history 
+
+The bot scans for:
+
+- Number of words
+- Number of swear words
+- Swear word diversity
+- Swear words used (stores only one instance per comment as this will be used to 
+calculate the most used swear words in order.)
+- Any additional relevant data **Needs expansion.**
 
 ## Usage
 
-The bot will only evaluate users once, unless specifically invoked to re-evaluate them at a later date. 
+The bot will only evaluate users once, unless specifically invoked by the user to 
+re-evaluate them at a later date. The bot will also list instructions below in case
+of error. The user can reply to the bot which will read the comment to see if any
+error has been made. 
 
 ## Contributing
 
-At this time, contributions are not being accepted since this project is intended to improve my abilities with both Git and Python.
+At this time, contributions are not being accepted since this project is intended 
+to improve my abilities with both Git and Python. 
