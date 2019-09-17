@@ -1,21 +1,24 @@
-"""Cussbot
-https://www.reddit.com/user/cussbot
-
-username: cussbot
-password: SeBzxr*we%&xBHQcf%8NfBmjzg6vYwhS
-
-client_id: nrE5x4yJ_LUo9Q
-client_secret: m8ItmlnLRlJ6GVVS1KD5tWsvhsQ
-"""
-
 import praw
+import configparser
+
+# Read praw.ini config file for login info
+# Todo: Check if config file exists. Create if does not.
+config = configparser.RawConfigParser()
+config.read('Config/praw.ini')
+
+client_id = config['Praw Login']['client_id']
+client_secret = config['Praw Login']['client_secret']
+username = config['Praw Login']['username']
+password = config['Praw Login']['password']
+user_agent = config['Praw Login']['user_agent']
+
 
 # Reddit API Login
-reddit = praw.Reddit(client_id = 'nrE5x4yJ_LUo9Q',
-                     client_secret = 'm8ItmlnLRlJ6GVVS1KD5tWsvhsQ',
-                     username = 'cussbot',
-                     password = 'SeBzxr*we%&xBHQcf%8NfBmjzg6vYwhS',
-                     user_agent = 'cussbot by /u/th1nker')
+reddit = praw.Reddit(client_id=client_id,
+                     client_secret=client_secret,
+                     username=username,
+                     password=password,
+                     user_agent=user_agent)
 
 # Subreddits | Subreddits go here
 subreddit = reddit.subreddit('funny')
