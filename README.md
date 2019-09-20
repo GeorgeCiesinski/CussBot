@@ -33,6 +33,7 @@ The bot scans for:
 - Swear word diversity
 - Swear words used (stores only one instance per comment as this will be used to 
 calculate the most used swear words in order.)
+- Subreddit the comment was found
 - Any additional relevant data **Needs expansion.**
 
 ## Usage

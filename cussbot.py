@@ -1,5 +1,6 @@
 import praw
 import configparser
+import words
 
 
 class CussFinder:
@@ -44,15 +45,7 @@ class CussFinder:
         # Keyphrase | Swear words go here in alphabetical order
         # Todo: Add more swear words
         # Todo: Add conditional options depending on swear word origin
-        keyphrase = ['asshole',
-                     'bastard',
-                     'bitch',
-                     'cunt',
-                     'fuck',
-                     'prick',
-                     'shit',
-                     'slut',
-                     'twat']
+        keyphrase = words.brit_aus + words.brit_aus_derogatory + words.other + words.universal + words.universal_derogatory
 
         # Todo: Update log instead of printing to console
         # Look through comments in subreddit and print info to shell
