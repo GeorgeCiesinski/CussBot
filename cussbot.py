@@ -1,20 +1,48 @@
+import os
 import praw
 import configparser
 import words
 
 
-class CussFinder:
+class CussFinder(object):
 
-    def __init__(self):
-        # Set in praw_login()
+    def __init__(self, subreddit):
+        # Praw session is set in praw_login()
         self.reddit = None
+        self.subreddit = subreddit
         self.praw_login()
         self.comment_skimmer()
+
+    def create_dir(self, folder):
+        directory = folder
+        parent_dir = os.getcwd()
+        print(parent_dir)
+        path = os.path.join(parent_dir, directory)
+
+        try:
+            os.mkdir(path)
+        except OSError as error:
+            print('Creation of the directory %f failed.' % path)
+            print(error)
+        else:
+            print('Successfully created the directory %s.' % path)
+
+    def config_init(self):
+
+        folder = 'Config'
+        if os.path.exists(folder):
+            print(folder, 'directory found.')
+            pass
+        else:
+            # Creates directory if doesn't exist
+            print(folder, 'directory missing. Creating Config directory.')
+            self.create_dir(folder)
 
     def praw_login(self):
 
         # Read praw.ini config file for login info
         # Todo: Check if config file exists. Create if does not
+        self.config_init()
         config = configparser.RawConfigParser()
         config.read('Config/praw.ini')
 
@@ -40,7 +68,7 @@ class CussFinder:
     def comment_skimmer(self):
 
         # Subreddits | Subreddits go here
-        subreddit = self.reddit.subreddit('funny')
+        s = self.reddit.subreddit(self.subreddit)
 
         # Keyphrase | Swear words go here in alphabetical order
         # Todo: Add more swear words
@@ -49,7 +77,7 @@ class CussFinder:
 
         # Todo: Update log instead of printing to console
         # Look through comments in subreddit and print info to shell
-        for comment in subreddit.stream.comments():
+        for comment in s.stream.comments():
             for cuss in keyphrase:
                 if cuss in comment.body:
                     print(comment.body + '\n')
@@ -57,4 +85,5 @@ class CussFinder:
                     print('https://www.reddit.com' + comment.permalink + '\n\n')
 
 
-c = CussFinder()
+sr = 'funny'
+c = CussFinder(sr)
