@@ -4,20 +4,11 @@ import configparser
 import words
 
 
-class CussFinder(object):
+# Class manages the config directory and mandatory login file
+class Configurator:
 
-    def __init__(self, subreddit):
-        # Praw session is set in praw_login()
-        self.reddit = None
-        self.subreddit = subreddit
-        self.praw_login()
-        self.comment_skimmer()
-
-    def create_dir(self, folder):
-        directory = folder
-        parent_dir = os.getcwd()
-        print(parent_dir)
-        path = os.path.join(parent_dir, directory)
+    @staticmethod
+    def create_dir(path):
 
         try:
             os.mkdir(path)
@@ -27,23 +18,80 @@ class CussFinder(object):
         else:
             print('Successfully created the directory %s.' % path)
 
-    def config_init(self):
+    @staticmethod
+    def create_empty_login(directory, file_name):
+        # New Config Parser
+        config = configparser.RawConfigParser(allow_no_value=True)
 
-        folder = 'Config'
-        if os.path.exists(folder):
-            print(folder, 'directory found.')
+        # Create Config Body
+        config.add_section('Praw Login')
+        config.set('Praw Login', '# Enter your Praw Login information below')
+        config.set('Praw Login', 'client_id', '')
+        config.set('Praw Login', 'client_secret', '')
+        config.set('Praw Login', 'username', '')
+        config.set('Praw Login', 'password', '')
+        config.set('Praw Login', 'user_agent', '')
+
+        # Creates path for Config File
+        file_path = directory + '/' + file_name
+        print(file_path)
+
+        # Write Config File to created path
+        with open(file_path, 'w') as configfile:
+            config.write(configfile)
+
+        print("Created empty Config file.")
+
+    @staticmethod
+    def config_init():
+
+        # Config Folder Info
+        config_dir = 'Config'
+        file_name = 'praw.ini'
+
+        # Creates a path to include the new directory
+        parent_dir = os.getcwd()
+        config_path = os.path.join(parent_dir, config_dir)
+        file_path = os.path.join(config_path, file_name)
+
+        if os.path.exists(config_dir):
+            print(config_dir, 'directory found.')
             pass
         else:
             # Creates directory if doesn't exist
-            print(folder, 'directory missing. Creating Config directory.')
-            self.create_dir(folder)
+            print(config_dir, 'directory missing. Creating Config directory.')
+            Configurator.create_dir(config_path)
+
+        if os.path.exists(file_path):
+            print('Praw Login File Found.')
+        else:
+            print('Praw Login File Missing. Creating an empty Praw Login File.')
+            Configurator.create_empty_login(config_dir, file_name)
+
+    @staticmethod
+    def log_init():
+        log_dir = 'Logs'
+        pass
+
+
+class CussFinder(object):
+
+    def __init__(self, subreddit):
+
+        # Praw session is set in praw_login()
+        self.reddit = None
+        self.subreddit = subreddit
+        # Checks Config directory and praw login
+        Configurator.config_init()
+        # self.praw_login()
+        # self.comment_skimmer()
 
     def praw_login(self):
 
-        # Read praw.ini config file for login info
-        # Todo: Check if config file exists. Create if does not
-        self.config_init()
+        # New Config Parser
         config = configparser.RawConfigParser()
+
+        # Read praw.ini config file for login info
         config.read('Config/praw.ini')
 
         # Assign login credentials using .ini file
