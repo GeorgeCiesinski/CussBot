@@ -1,6 +1,7 @@
 import os
-import praw
+import logging
 import configparser
+import praw
 import words
 
 
@@ -34,13 +35,13 @@ class Configurator:
 
         # Creates path for Config File
         file_path = directory + '/' + file_name
-        print(file_path)
+        logger.info('Saving config file at ' + file_path)
 
         # Write Config File to created path
         with open(file_path, 'w') as configfile:
             config.write(configfile)
 
-        print("Created empty Config file.")
+        logger.info("Created empty Config file.")
 
     @staticmethod
     def config_init():
@@ -55,17 +56,17 @@ class Configurator:
         file_path = os.path.join(config_path, file_name)
 
         if os.path.exists(config_dir):
-            print(config_dir, 'directory found.')
+            logger.info(config_dir + ' directory found.')
             pass
         else:
             # Creates directory if doesn't exist
-            print(config_dir, 'directory missing. Creating Config directory.')
+            logger.info(config_dir + ' directory missing. Creating Config directory.')
             Configurator.create_dir(config_path)
 
         if os.path.exists(file_path):
-            print('Praw Login File Found.')
+            logger.info('Praw Login File Found.')
         else:
-            print('Praw Login File Missing. Creating an empty Praw Login File.')
+            logger.info('Praw Login File Missing. Creating an empty Praw Login File.')
             Configurator.create_empty_login(config_dir, file_name)
 
     @staticmethod
@@ -81,10 +82,8 @@ class CussFinder(object):
         # Praw session is set in praw_login()
         self.reddit = None
         self.subreddit = subreddit
-        # Checks Config directory and praw login
-        Configurator.config_init()
-        # self.praw_login()
-        # self.comment_skimmer()
+        self.praw_login()
+        self.comment_skimmer()
 
     def praw_login(self):
 
@@ -92,6 +91,7 @@ class CussFinder(object):
         config = configparser.RawConfigParser()
 
         # Read praw.ini config file for login info
+        logger.info('Reading praw.ini file.')
         config.read('Config/praw.ini')
 
         # Assign login credentials using .ini file
@@ -102,6 +102,7 @@ class CussFinder(object):
         user_agent = config['Praw Login']['user_agent']
 
         # Reddit API Login
+        logger.info("Attempting PRAW login.")
         self.reddit = praw.Reddit(
             client_id=client_id,
             client_secret=client_secret,
@@ -110,7 +111,7 @@ class CussFinder(object):
             user_agent=user_agent
         )
 
-        print("PRAW Login Successful.")
+        logger.info("PRAW Login Successful.")
 
     # Todo: Create new .py file for the comment skimmer
     def comment_skimmer(self):
@@ -133,5 +134,19 @@ class CussFinder(object):
                     print('https://www.reddit.com' + comment.permalink + '\n\n')
 
 
+# Logging setup
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s')
+file_handler = logging.FileHandler('Logs/CussBot.log')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
+# Checks Config directory and praw login
+Configurator.config_init()
+
+# logger = Logger()
 sr = 'funny'
 c = CussFinder(sr)
