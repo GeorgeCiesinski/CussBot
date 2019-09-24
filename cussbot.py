@@ -14,10 +14,9 @@ class Configurator:
         try:
             os.mkdir(path)
         except OSError as error:
-            print('Creation of the directory %f failed.' % path)
-            print(error)
+            logger.exception('Creation of the directory %f failed.' % path)
         else:
-            print('Successfully created the directory %s.' % path)
+            logger.info('Successfully created the directory %s.' % path)
 
     @staticmethod
     def create_empty_login(directory, file_name):
@@ -120,7 +119,6 @@ class CussFinder(object):
         s = self.reddit.subreddit(self.subreddit)
 
         # Keyphrase | Swear words go here in alphabetical order
-        # Todo: Add more swear words
         # Todo: Add conditional options depending on swear word origin
         keyphrase = words.brit_aus + words.brit_aus_derogatory + words.other + words.universal + words.universal_derogatory
 
@@ -136,12 +134,12 @@ class CussFinder(object):
 
 # Logging setup
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
+logger.setLevel(logging.DEBUG)
+# Formatter and FileHandler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s')
 file_handler = logging.FileHandler('Logs/CussBot.log')
 file_handler.setFormatter(formatter)
-
+# Adds FileHandler to Logger
 logger.addHandler(file_handler)
 
 # Checks Config directory and praw login
