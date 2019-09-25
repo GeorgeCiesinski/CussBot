@@ -2,7 +2,7 @@ import os
 import logging
 import configparser
 import praw
-import words
+from cuss_scraper import Scraper
 
 
 # Class manages the config directory and mandatory login file
@@ -68,37 +68,40 @@ class Configurator:
             logger.info('Praw Login File Missing. Creating an empty Praw Login File.')
             Configurator.create_empty_login(config_dir, file_name)
 
-    @staticmethod
-    def log_init():
-        log_dir = 'Logs'
-        pass
 
+class CussBotController:
 
-class CussFinder(object):
-
-    def __init__(self, subreddit):
+    def __init__(self):
 
         # Praw session is set in praw_login()
         self.reddit = None
-        self.subreddit = subreddit
+        # Subreddit configured in scraper.ini
+        self.subreddit = None
+        # Reads config files
+        self.config = configparser.RawConfigParser()
+        # Scraper object used by CussBot
+        self.s = Scraper()
+
+    def bot_flow(self):
+        # Configures scraper settings
+        self.configure_scraper()
+        # Logs into Praw
         self.praw_login()
-        self.comment_skimmer()
+        # Todo: Simple praw test, replace with meaningful methods
+        self.test_scraper()
 
     def praw_login(self):
 
-        # New Config Parser
-        config = configparser.RawConfigParser()
-
         # Read praw.ini config file for login info
         logger.info('Reading praw.ini file.')
-        config.read('Config/praw.ini')
+        self.config.read('Config/praw.ini')
 
         # Assign login credentials using .ini file
-        client_id = config['Praw Login']['client_id']
-        client_secret = config['Praw Login']['client_secret']
-        username = config['Praw Login']['username']
-        password = config['Praw Login']['password']
-        user_agent = config['Praw Login']['user_agent']
+        client_id = self.config['Praw Login']['client_id']
+        client_secret = self.config['Praw Login']['client_secret']
+        username = self.config['Praw Login']['username']
+        password = self.config['Praw Login']['password']
+        user_agent = self.config['Praw Login']['user_agent']
 
         # Reddit API Login
         logger.info("Attempting PRAW login.")
@@ -112,24 +115,13 @@ class CussFinder(object):
 
         logger.info("PRAW Login Successful.")
 
-    # Todo: Create new .py file for the comment skimmer
-    def comment_skimmer(self):
+    def configure_scraper(self):
+        self.config.read('Config/scraper.ini')
+        self.subreddit = self.config['Comments']['subreddit']
+        logger.info('Scraper configured successfully.')
 
-        # Subreddits | Subreddits go here
-        s = self.reddit.subreddit(self.subreddit)
-
-        # Keyphrase | Swear words go here in alphabetical order
-        # Todo: Add conditional options depending on swear word origin
-        keyphrase = words.brit_aus + words.brit_aus_derogatory + words.other + words.universal + words.universal_derogatory
-
-        # Todo: Update log instead of printing to console
-        # Look through comments in subreddit and print info to shell
-        for comment in s.stream.comments():
-            for cuss in keyphrase:
-                if cuss in comment.body:
-                    print(comment.body + '\n')
-                    print(comment.author.name + ' said: ' + cuss + '\n')
-                    print('https://www.reddit.com' + comment.permalink + '\n\n')
+    def test_scraper(self):
+        Scraper.praw_test(self.s, self.reddit, self.subreddit)
 
 
 # Logging setup
@@ -145,6 +137,7 @@ logger.addHandler(file_handler)
 # Checks Config directory and praw login
 Configurator.config_init()
 
-# logger = Logger()
-sr = 'funny'
-c = CussFinder(sr)
+# Create CussBotController object
+c = CussBotController()
+# Fires up the bot
+c.bot_flow()
