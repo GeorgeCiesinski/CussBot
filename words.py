@@ -3,7 +3,7 @@ universal = [
     'asshole',
     'bastard',
     'bitch',
-    'clutterfuck',
+    'clusterfuck',
     'cock',
     'cocksucker',
     'cunt',

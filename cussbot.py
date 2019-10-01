@@ -3,6 +3,7 @@ import logging
 import configparser
 import praw
 from cuss_scraper import Scraper
+from Database import Database
 
 
 # Class manages the config directory and mandatory login file
@@ -40,7 +41,7 @@ class Configurator:
         with open(file_path, 'w') as configfile:
             config.write(configfile)
 
-        logger.info("Created empty Config file.")
+        logger.info("Successfully created empty Config file.")
 
     @staticmethod
     def config_init():
@@ -121,15 +122,20 @@ class CussBotController:
         logger.info('Scraper configured successfully.')
 
     def test_scraper(self):
+        Database.create_database()
         Scraper.praw_test(self.s, self.reddit, self.subreddit)
 
 
 # Logging setup
+logging.basicConfig(filename='Logs/full_logs.log',
+                    level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s : %(message)s')
+# Logger setup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # Formatter and FileHandler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s : %(message)s')
-file_handler = logging.FileHandler('Logs/CussBot.log')
+file_handler = logging.FileHandler('Logs/cussbot.log')
 file_handler.setFormatter(formatter)
 # Adds FileHandler to Logger
 logger.addHandler(file_handler)
