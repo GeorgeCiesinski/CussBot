@@ -8,3 +8,4 @@ Config/praw.ini
 Logs/*
 # Except this one
 !Logs/logging_levels.md
+Sqlite3/*
