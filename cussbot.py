@@ -2,22 +2,13 @@ import os
 import logging
 import configparser
 import praw
+import GLib
 from cuss_scraper import Scraper
 from Database import Database
 
 
 # Class manages the config directory and mandatory login file
 class Configurator:
-
-    @staticmethod
-    def create_dir(path):
-
-        try:
-            os.mkdir(path)
-        except OSError as error:
-            logger.exception('Creation of the directory %f failed.' % path)
-        else:
-            logger.info('Successfully created the directory %s.' % path)
 
     @staticmethod
     def create_empty_login(directory, file_name):
@@ -61,7 +52,7 @@ class Configurator:
         else:
             # Creates directory if doesn't exist
             logger.info(config_dir + ' directory missing. Creating Config directory.')
-            Configurator.create_dir(config_path)
+            GLib.create_dir(config_path)
 
         if os.path.exists(file_path):
             logger.info('Praw Login File Found.')
@@ -117,13 +108,22 @@ class CussBotController:
         logger.info("PRAW Login Successful.")
 
     def configure_scraper(self):
-        self.config.read('Config/scraper.ini')
-        self.subreddit = self.config['Comments']['subreddit']
-        logger.info('Scraper configured successfully.')
+        # Attempts to read scraper.ini config
+        try:
+            self.config.read('Config/scraper.ini')
+            self.subreddit = self.config['Comments']['subreddit']
+        except KeyError:
+            logger.exception("Failed to configure scraper due to KeyError.")
+        except:
+            logger.exception("Failed to configure scraper.")
+            raise
+        else:
+            logger.info('Scraper configured successfully.')
 
     def test_scraper(self):
-        Database.create_database()
-        Scraper.praw_test(self.s, self.reddit, self.subreddit)
+        pass
+        # Database.create_database()
+        # Scraper.praw_test(self.s, self.reddit, self.subreddit)
 
 
 # Logging setup

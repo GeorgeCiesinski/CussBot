@@ -1,9 +1,23 @@
 import logging
 import sqlite3
+import os
 import words
 
 
 class Database:
+
+    db_directory = None
+
+    @staticmethod
+    def check_table():
+        # Sqlite3 Folder Info
+        db_dir = 'Sqlite3'
+        file_name = 'cussbot.db'
+
+        # Creates a path to include the new directory
+        parent_dir = os.getcwd()
+        db_path = os.path.join(parent_dir, db_dir)
+        Database.db_directory = os.path.join(db_dir, file_name)
 
     @staticmethod
     def create_database():
