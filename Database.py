@@ -6,65 +6,62 @@ import words
 
 class Database:
 
-    # Database directory
-    db_directory = None
-
     # Sets database directory
     @staticmethod
     def database_directory():
         # Sqlite3 Folder Info
         db_dir = 'Sqlite3'
+        # Name of the database file. Needs to be stored in the Sqlite3 Folder.
         file_name = 'cussbot.db'
 
         # Creates a path for the Database
-        parent_dir = os.getcwd()
-        db_path = os.path.join(parent_dir, db_dir)
-        Database.db_directory = os.path.join(db_dir, file_name)
+        db_directory = os.path.join(db_dir, file_name)
+        logger.info(f'Successfully joined {db_dir} and {file_name} into {db_directory}')
+        return db_directory
 
     @staticmethod
-    def create_database():
-        # Todo: Modify this to check if db exists or not, and to update logger correctly.
-        c = sqlite3.connect('Sqlite3/cussbot.db')
-        c.close()
-        logger.info('Database successfully created.')
+    def create_connection(db_directory):
 
+        conn = None
+
+        # Attempt to create connection object, log exception if fails.
+        try:
+            conn = sqlite3.connect(db_directory)
+            return conn
+        except:
+            logger.exception('Failed to create connection object.')
+            raise
+
+        # Returns connection object
+        return conn
+
+    # Creates word table for the first time
     @staticmethod
-    def start_database():
+    def create_word_tables(conn):
+        # Connection object
+        c = conn
+
+    def start_database(self):
+        
+        """
+        This method always needs to be run first.
+        - Creates db if doesn't exist
+        - Creates tables in db if they do not exist
+        """
 
         # Sets database directory
-        Database.database_directory()
+        db_directory = self.database_directory()
 
         # Checks if database exists
-        if os.path.exists(Database.db_directory):
-            logger.info('Database has been found at ' + Database.db_directory + '.')
+        if os.path.exists(db_directory):
+            logger.info('Database has been found at ' + db_directory + '.')
+            # Creates connection object.
+            conn = self.create_connection(db_directory)
         else:
-            # Creates database if doesn't exist
             logger.info('Database not found. Creating new database.')
-            Database.create_database()
-
-
-    # @staticmethod
-    # def create_table():
-    #     c = sqlite3.connect('Sqlite3/cussbot.db')
-    #     c.execute("""
-    #     create table cusswords
-    #     (
-    #       id integer primary key autoincrement,
-    #       word varchar(100)
-    #     );
-    #     """)
-    #     c.close()
-    #     logger.info('cusswords table created.')
-    #
-    # @staticmethod
-    # def insert_values():
-    #     universal = words.universal
-    #     c = sqlite3.connect('Sqlite3/cussbot.db')
-    #     for u in universal:
-    #         c.execute("Insert into cusswords (word) values (?)", u)
-    #         logger.info('Inserted the word ' + u + ' into database.')
-    #     c.commit()
-    #     c.close()
+            # Creates connection object. This also creates the database if doesn't exist.
+            conn = self.create_connection(db_directory)
+            logger.info('Database successfully created.')
 
 
 # Logger setup
@@ -80,4 +77,7 @@ logger.addHandler(file_handler)
 # Debugging Database.py
 if __name__ == "__main__":
 
-    Database.start_database()
+    # Create database object
+    d = Database()
+    # Starts the database
+    d.start_database()
