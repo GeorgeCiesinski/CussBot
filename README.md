@@ -69,7 +69,10 @@ property
 
 derivatives
 
-
+| word_id | child_words  |
+| ------- | ------------ |
+| 3       | fucker       |
+| 3       | motherfucker | 
 
 
 ## Contributing

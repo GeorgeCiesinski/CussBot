@@ -46,13 +46,13 @@ class Database:
             raise
 
     @staticmethod
-    def execute_query(conn, query):
-        # Executes sql query
+    def execute_sql_no_return(conn, query):
+        # Executes sql query, doesn't return any values
         try:
             c = conn.cursor()
             c.execute(query)
             conn.commit()
-            logger.info('Successfully executed the query.')
+            logger.info(f'Successfully executed the query: \n{query}')
         except:
             logger.exception(f'Failed to execute the query: \n{query}')
             raise
@@ -62,7 +62,7 @@ class Database:
 
         sql_create_cusswords_table = """CREATE TABLE IF NOT EXISTS cusswords (
         id integer PRIMARY KEY,
-        word text NOT NULL
+        word text NOT NULL UNIQUE
         );"""
 
         sql_create_property_table = """CREATE TABLE IF NOT EXISTS property (
@@ -71,8 +71,43 @@ class Database:
         property_value varchar(100) NOT NULL
         );"""
 
-        self.execute_query(conn, sql_create_cusswords_table)
-        self.execute_query(conn, sql_create_property_table)
+        sql_create_derivative_table = """CREATE TABLE IF NOT EXISTS derivatives (
+        word_id integer NOT NULL,
+        child_word varchar(100) NOT NULL UNIQUE
+        );"""
+
+        if conn is not None:
+            self.execute_sql_no_return(conn, sql_create_cusswords_table)
+            self.execute_sql_no_return(conn, sql_create_property_table)
+            self.execute_sql_no_return(conn, sql_create_derivative_table)
+        else:
+            logger.info('Unable to create word tables as there is no connection.')
+
+    def insert_into_db(self, conn, word_list):
+
+        if conn is not None:
+
+            for l_word in word_list:
+
+                sql_insert_into_cusswords = f"""
+                INSERT INTO cusswords (word)
+                VALUES(\'{l_word}\');
+                """
+
+                self. execute_sql_no_return(conn, sql_insert_into_cusswords)
+
+    def word_list_insertion(self, conn):
+
+        cusswords_list = [
+            words.universal,
+            words.universal_derogatory,
+            words.brit_aus,
+            words.brit_aus_derogatory,
+            words.other
+            ]
+
+        for list in cusswords_list:
+            self.insert_into_db(conn, list)
 
     def start_database(self):
 
@@ -100,6 +135,7 @@ class Database:
 
         # Create word tables
         self.create_word_tables(conn)
+        self.word_list_insertion(conn)
 
         # Close connection
         self.close_conn(conn)
@@ -118,6 +154,7 @@ logger.addHandler(file_handler)
 # Debugging Database.py
 if __name__ == "__main__":
 
+    logger.info('Database.py is running as __main__.')
     # Create database object
     d = Database()
     # Starts the database
