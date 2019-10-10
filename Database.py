@@ -57,6 +57,21 @@ class Database:
             logger.exception(f'Failed to execute the query: \n{query}')
             raise
 
+    @staticmethod
+    def execute_select(conn, query):
+        # Executes select query, returns list of tuples
+        try:
+            c = conn.cursor()
+            c.execute(query)
+            conn.commit()
+            logger.info(f'Successfully executed the query: \n{query}')
+        except:
+            logger.exception(f'Failed to execute the query: \n{query}')
+            raise
+
+        rows = c.fetchall()
+        return rows
+
     # Creates word table for the first time
     def create_word_tables(self, conn):
 
@@ -77,13 +92,14 @@ class Database:
         );"""
 
         if conn is not None:
+            # Create tables: cusswords, property, derivative
             self.execute_sql_no_return(conn, sql_create_cusswords_table)
             self.execute_sql_no_return(conn, sql_create_property_table)
             self.execute_sql_no_return(conn, sql_create_derivative_table)
         else:
             logger.info('Unable to create word tables as there is no connection.')
 
-    def insert_into_db(self, conn, word_list):
+    def insert_list_into_db(self, conn, word_list):
 
         if conn is not None:
 
@@ -106,8 +122,61 @@ class Database:
             words.other
             ]
 
-        for list in cusswords_list:
-            self.insert_into_db(conn, list)
+        for word_list in cusswords_list:
+            self.insert_list_into_db(conn, word_list)
+
+    def property_insertion(self, conn):
+
+        # Todo: make this method more pythonic
+
+        select_all_from_cusswords = """
+        SELECT * FROM cusswords 
+        """
+
+        rows = self.execute_select(conn, select_all_from_cusswords)
+
+        for row in rows:
+            word_id = row[0]
+            word = row[1]
+            dialect = None
+            derogatory = None
+            print(word)
+
+            # Todo: Make this into a new method, return dialect and derogatory
+            # Sets dialect and derogatory values
+            if word in words.universal:
+                dialect = 'universal'
+                derogatory = 'false'
+            if word in words.universal_derogatory:
+                dialect = 'universal'
+                derogatory = 'true'
+            elif word in words.brit_aus:
+                dialect = 'brit_aus'
+                derogatory = 'false'
+            elif word in words.brit_aus_derogatory:
+                dialect = 'brit_aus'
+                derogatory = 'true'
+            elif word in words.other:
+                dialect = 'other'
+                derogatory = 'false'
+            else:
+                logger.info('This word does not appear in any list.')
+
+            insert_dialect_query = f"""
+            INSERT INTO property (word_id, property_name, property_value)
+            VALUES(\'{word_id}\', 'dialect', \'{dialect}\');
+            """
+
+            insert_derogatory_query = f"""
+            INSERT INTO property (word_id, property_name, property_value)
+            VALUES(\'{word_id}\', 'derogatory', \'{derogatory}\');
+            """
+
+            # Insert dialect property value into table
+            self.execute_sql_no_return(conn, insert_dialect_query)
+
+            # Insert derogatory property value into table
+            self.execute_sql_no_return(conn, insert_derogatory_query)
 
     def start_database(self):
 
@@ -135,7 +204,12 @@ class Database:
 
         # Create word tables
         self.create_word_tables(conn)
+
+        # Insert all swearwords except derivatives into cusswords table
         self.word_list_insertion(conn)
+
+        # Insert cussword properties into property table
+        self.property_insertion(conn)
 
         # Close connection
         self.close_conn(conn)

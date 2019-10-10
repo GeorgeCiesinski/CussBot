@@ -1,3 +1,7 @@
+"""
+This list is used to generate cusswords.db for the first time.
+"""
+
 # Inserted into cusswords (unique). Id = 1 - 20
 universal = [
     'ass',
@@ -20,7 +24,6 @@ universal = [
     'slut',
     'tits',
     'turd',
-
 ]
 
 ass_derivative = [
@@ -81,6 +84,7 @@ fag_derivative = [
     'faggot',
 ]
 
+# Inserted into cusswords (unique). Id = 31 - 44
 brit_aus = [
     'arse',
     'bellend',
@@ -96,7 +100,6 @@ brit_aus = [
     'tosser',
     'twat',
     'wank',
-    'wanker',
 ]
 
 arse_derivative = [
@@ -113,6 +116,11 @@ minge_derivative = [
     'minger',
 ]
 
+wank_derivative = [
+    'wanker',
+]
+
+# Inserted into cusswords (unique). Id = 45 - 48
 brit_aus_derogatory = [
     'bint',
     'bogan',
@@ -120,6 +128,7 @@ brit_aus_derogatory = [
     'munter',
 ]
 
+# Inserted into cusswords (unique). Id = 49 - 52
 other = [
     'bloodclaat',
     'cholo',
