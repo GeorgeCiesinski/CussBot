@@ -1,3 +1,4 @@
+import configparser
 import logging
 import sqlite3
 import os
@@ -5,6 +6,10 @@ import words
 
 
 class Database:
+
+    def __init__(self):
+        # Starts config parser to read words.ini
+        self.config = configparser.RawConfigParser(allow_no_value=True)
 
     # Sets database directory
     @staticmethod
@@ -112,6 +117,14 @@ class Database:
 
                 self. execute_sql_no_return(conn, sql_insert_into_cusswords)
 
+    def test(self):
+
+        self.config.read('Config/words.ini')
+        universal = self.config['Words']['universal']
+        print(universal)
+        s_universal = universal.split(", ")
+        print(s_universal)
+
     def word_list_insertion(self, conn):
 
         cusswords_list = [
@@ -124,6 +137,30 @@ class Database:
 
         for word_list in cusswords_list:
             self.insert_list_into_db(conn, word_list)
+
+    @staticmethod
+    def property_assigner(word):
+
+        # Sets dialect and derogatory values
+        if word in words.universal:
+            dialect = 'universal'
+            derogatory = 'false'
+        elif word in words.universal_derogatory:
+            dialect = 'universal'
+            derogatory = 'true'
+        elif word in words.brit_aus:
+            dialect = 'brit_aus'
+            derogatory = 'false'
+        elif word in words.brit_aus_derogatory:
+            dialect = 'brit_aus'
+            derogatory = 'true'
+        elif word in words.other:
+            dialect = 'other'
+            derogatory = 'false'
+        else:
+            logger.info(f'The word {word} does not appear in any list.')
+
+        return dialect, derogatory
 
     def property_insertion(self, conn):
 
@@ -138,29 +175,11 @@ class Database:
         for row in rows:
             word_id = row[0]
             word = row[1]
-            dialect = None
-            derogatory = None
             print(word)
 
-            # Todo: Make this into a new method, return dialect and derogatory
-            # Sets dialect and derogatory values
-            if word in words.universal:
-                dialect = 'universal'
-                derogatory = 'false'
-            if word in words.universal_derogatory:
-                dialect = 'universal'
-                derogatory = 'true'
-            elif word in words.brit_aus:
-                dialect = 'brit_aus'
-                derogatory = 'false'
-            elif word in words.brit_aus_derogatory:
-                dialect = 'brit_aus'
-                derogatory = 'true'
-            elif word in words.other:
-                dialect = 'other'
-                derogatory = 'false'
-            else:
-                logger.info('This word does not appear in any list.')
+            word_properties = self.property_assigner(word)
+            dialect = word_properties[0]
+            derogatory = word_properties[1]
 
             insert_dialect_query = f"""
             INSERT INTO property (word_id, property_name, property_value)
@@ -193,26 +212,22 @@ class Database:
         if os.path.exists(db_directory):
             logger.info('Database has been found at ' + db_directory + '.')
         else:
+            # Creates new database as cussbot.db does not exist
             logger.info('Database not found. Creating new database.')
+
             # Creates connection object. This also creates the database if doesn't exist.
             conn = self.create_connection(db_directory)
-            logger.info('Successfully created database.')
+            # Create word tables
+            self.create_word_tables(conn)
+            # Insert all swearwords except derivatives into cusswords table
+            self.word_list_insertion(conn)
+            # Insert cussword properties into property table
+            self.property_insertion(conn)
+            # Close connection
             self.close_conn(conn)
 
-        # Create connection
-        conn = self.create_connection(db_directory)
-
-        # Create word tables
-        self.create_word_tables(conn)
-
-        # Insert all swearwords except derivatives into cusswords table
-        self.word_list_insertion(conn)
-
-        # Insert cussword properties into property table
-        self.property_insertion(conn)
-
-        # Close connection
-        self.close_conn(conn)
+        # Todo: Delete after testing complete
+        # self.test()
 
 
 # Logger setup
@@ -233,3 +248,4 @@ if __name__ == "__main__":
     d = Database()
     # Starts the database
     d.start_database()
+

@@ -1,5 +1,5 @@
 """
-This list is used to generate cusswords.db for the first time.
+These lists are used to generate cusswords.db for the first time.
 """
 
 # Inserted into cusswords (unique). Id = 1 - 20
