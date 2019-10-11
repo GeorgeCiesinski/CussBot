@@ -8,12 +8,27 @@ import words
 class Database:
 
     def __init__(self):
+
         # Starts config parser to read words.ini
         self.config = configparser.RawConfigParser(allow_no_value=True)
+
+        # Word lists
+        self.universal = None
+        self.universal_derogatory = None
+        self.brit_aus = None
+        self.brit_aus_derogatory = None
+        self.other = None
 
     # Sets database directory
     @staticmethod
     def database_directory():
+        """
+        Assembles the database directory
+
+        :return: db_directory
+        :rtype: str
+        """
+
         # Sqlite3 Folder Info
         db_dir = 'Sqlite3'
         # Name of the database file. Needs to be stored in the Sqlite3 Folder.
@@ -26,6 +41,13 @@ class Database:
 
     @staticmethod
     def create_connection(db_directory):
+        """
+        Attempts to create a connection to the database.
+
+        :param db_directory:
+        :return: Connection object
+        :rtype: object
+        """
 
         conn = None
 
@@ -43,6 +65,12 @@ class Database:
 
     @staticmethod
     def close_conn(conn):
+        """
+        Attempts to close the connection to the database.
+
+        :param conn:
+        :return:
+        """
         try:
             conn.close()
             logger.info('Successfully closed database connection.')
@@ -52,6 +80,13 @@ class Database:
 
     @staticmethod
     def execute_sql_no_return(conn, query):
+        """
+        Executes the query. Returns nothing.
+
+        :param conn:
+        :param query:
+        """
+
         # Executes sql query, doesn't return any values
         try:
             c = conn.cursor()
@@ -64,7 +99,15 @@ class Database:
 
     @staticmethod
     def execute_select(conn, query):
-        # Executes select query, returns list of tuples
+        """
+        Executes select query.
+
+        :param conn:
+        :param query:
+        :return: List of tuples.
+        :rtype: List
+        """
+
         try:
             c = conn.cursor()
             c.execute(query)
@@ -79,6 +122,11 @@ class Database:
 
     # Creates word table for the first time
     def create_word_tables(self, conn):
+        """
+        Executes queries to create word tables.
+
+        :param conn:
+        """
 
         sql_create_cusswords_table = """CREATE TABLE IF NOT EXISTS cusswords (
         id integer PRIMARY KEY,
@@ -105,6 +153,12 @@ class Database:
             logger.info('Unable to create word tables as there is no connection.')
 
     def insert_list_into_db(self, conn, word_list):
+        """
+        Runs query which inserts words in word_list into cusswords table.
+
+        :param conn:
+        :param word_list:
+        """
 
         if conn is not None:
 
@@ -117,54 +171,40 @@ class Database:
 
                 self. execute_sql_no_return(conn, sql_insert_into_cusswords)
 
-    def test(self):
+    def word_list_insertion(self, conn):
+        """
+        Creates cusswords list by reading words.ini config file.
+
+        :param conn:
+        """
 
         self.config.read('Config/words.ini')
-        universal = self.config['Words']['universal']
-        print(universal)
-        s_universal = universal.split(", ")
-        print(s_universal)
 
-    def word_list_insertion(self, conn):
+        # Splits strings from words.ini into usable lists
+        self.universal = (self.config['Words']['universal']).split(', ')
+        self.universal_derogatory = (self.config['Derogatory']['universal']).split(', ')
+        self.brit_aus = (self.config['Words']['brit_aus']).split(', ')
+        self.brit_aus_derogatory = (self.config['Derogatory']['brit_aus']).split(', ')
+        self.other = (self.config['Words']['other']).split(', ')
 
+        # Creates list of list
         cusswords_list = [
-            words.universal,
-            words.universal_derogatory,
-            words.brit_aus,
-            words.brit_aus_derogatory,
-            words.other
+            self.universal,
+            self.universal_derogatory,
+            self.brit_aus,
+            self.brit_aus_derogatory,
+            self.other
             ]
 
         for word_list in cusswords_list:
             self.insert_list_into_db(conn, word_list)
 
-    @staticmethod
-    def property_assigner(word):
-
-        # Sets dialect and derogatory values
-        if word in words.universal:
-            dialect = 'universal'
-            derogatory = 'false'
-        elif word in words.universal_derogatory:
-            dialect = 'universal'
-            derogatory = 'true'
-        elif word in words.brit_aus:
-            dialect = 'brit_aus'
-            derogatory = 'false'
-        elif word in words.brit_aus_derogatory:
-            dialect = 'brit_aus'
-            derogatory = 'true'
-        elif word in words.other:
-            dialect = 'other'
-            derogatory = 'false'
-        else:
-            logger.info(f'The word {word} does not appear in any list.')
-
-        return dialect, derogatory
-
     def property_insertion(self, conn):
+        """
+        Creates queries to insert the property of each word into the property table.
 
-        # Todo: make this method more pythonic
+        :param conn:
+        """
 
         select_all_from_cusswords = """
         SELECT * FROM cusswords 
@@ -197,8 +237,37 @@ class Database:
             # Insert derogatory property value into table
             self.execute_sql_no_return(conn, insert_derogatory_query)
 
-    def start_database(self):
+    def property_assigner(self, word):
+        """
+        Assigns each word a property.
 
+        :param word:
+        :return: dialect and derogatory properties
+        :rtype: tuple
+        """
+
+        # Sets dialect and derogatory values
+        if word in self.universal:
+            dialect = 'universal'
+            derogatory = 'false'
+        elif word in self.universal_derogatory:
+            dialect = 'universal'
+            derogatory = 'true'
+        elif word in self.brit_aus:
+            dialect = 'brit_aus'
+            derogatory = 'false'
+        elif word in self.brit_aus_derogatory:
+            dialect = 'brit_aus'
+            derogatory = 'true'
+        elif word in self.other:
+            dialect = 'other'
+            derogatory = 'false'
+        else:
+            logger.info(f'The word {word} does not appear in any list.')
+
+        return dialect, derogatory
+
+    def start_database(self):
         """
         This method always needs to be run first.
         - Creates db if doesn't exist
@@ -226,9 +295,10 @@ class Database:
             # Close connection
             self.close_conn(conn)
 
-        # Todo: Delete after testing complete
-        # self.test()
 
+"""
+Logger is setup here.
+"""
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -240,7 +310,9 @@ file_handler.setFormatter(formatter)
 # Adds FileHandler to Logger
 logger.addHandler(file_handler)
 
-# Debugging Database.py
+"""
+Debugging Database.py
+"""
 if __name__ == "__main__":
 
     logger.info('Database.py is running as __main__.')
