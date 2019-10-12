@@ -8,6 +8,11 @@ class Comment:
 	# input: praw comment
 	# output: None
 	def __init__(self, comment):
+		"""
+		Creates new comment object from Praw comment object.
+
+		:param comment:
+		"""
 
 		self.permalink = comment.permalink
 		self.body = comment.body

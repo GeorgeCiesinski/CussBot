@@ -7,6 +7,11 @@ George's Library of frequently used methods.
 
 
 def create_dir(path):
+    """
+    Creates the path provided.
+
+    :param path:
+    """
 
     try:
         os.mkdir(path)
