@@ -12,6 +12,7 @@ class Configurator:
 
     @staticmethod
     def create_empty_login(directory, file_name):
+
         # New Config Parser
         config = configparser.RawConfigParser(allow_no_value=True)
 
