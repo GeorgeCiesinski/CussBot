@@ -1,14 +1,14 @@
-# DEBUG
+# DEBUG - 10
 Detailed information, typically of interest only when diagnosing problems.
 
-# INFO
+# INFO - 20
 Confirmation that things are working as expected.
 
-# WARNING
+# WARNING - 30
 An indication that something unexpected happened, or indicative of some problem in the near future (e.g. ‘disk space low’). The software is still working as expected.
 
-# ERROR
+# ERROR - 40
 Due to a more serious problem, the software has not been able to perform some function.
 
-# CRITICAL
+# CRITICAL - 50
 A serious error, indicating that the program itself may be unable to continue running.

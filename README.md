@@ -43,6 +43,38 @@ re-evaluate them at a later date. The bot will also list instructions below in c
 of error. The user can reply to the bot which will read the comment to see if any
 error has been made. 
 
+## Database
+
+CussBot uses the SQLite3 database. The cussbot.db database file is stored in the Sqlite3
+folder, where the Database.py script expects to find it. 
+
+### ++ Tables ++
+
+#### Words (3 tables)
+
+cusswords
+
+| id (Primary Key)| word  |
+| --------------- | ----- |
+| 1               | shit  |
+| 2               | arse  |
+| 3               | fuck  |
+
+property
+
+| word_id | property_name | property_value |
+| ------- | ------------- | -------------- |
+| 2       | derogatory    | false          |
+| 2       | dialect       | british        |
+
+derivatives
+
+| word_id | child_words  |
+| ------- | ------------ |
+| 3       | fucker       |
+| 3       | motherfucker | 
+
+
 ## Contributing
 
 At this time, contributions are not being accepted since this project is intended 

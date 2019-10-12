@@ -1,4 +1,11 @@
-Config/praw.ini
+# Basic .gitnore Files
 venv/
 .idea/
 __pycache__/
+# Unique Login Info
+Config/praw.ini
+# Ignore all files in this directory
+Logs/*
+# Except this one
+!Logs/logging_levels.md
+Sqlite3/*
