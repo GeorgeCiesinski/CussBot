@@ -9,9 +9,18 @@ from Database import Database
 
 # Class manages the config directory and mandatory login file
 class Configurator:
+    """
+    Class for creating Config directory and praw.ini file.
+    """
 
     @staticmethod
     def create_empty_login(directory, file_name):
+        """
+        Creates empty praw.ini file with instructions.
+
+        :param directory:
+        :param file_name:
+        """
 
         # New Config Parser
         config = configparser.RawConfigParser(allow_no_value=True)
@@ -37,6 +46,12 @@ class Configurator:
 
     @staticmethod
     def config_init():
+        """
+        1. Assembles the config directory, then checks if this directory already exists. Creates directory if doesn't.
+        2. Checks if praw.ini exists. Creates empty file if doesn't.
+        """
+
+        # Todo: Break this into two methods. 1) Check/create config directory.
 
         # Config Folder Info
         config_dir = 'Config'
@@ -45,6 +60,8 @@ class Configurator:
         # Creates a path to include the new directory
         parent_dir = os.getcwd()
         config_path = os.path.join(parent_dir, config_dir)
+
+        # Creates file path to check if file exists
         file_path = os.path.join(config_path, file_name)
 
         if os.path.exists(config_dir):
@@ -55,6 +72,7 @@ class Configurator:
             logger.info(config_dir + ' directory missing. Creating Config directory.')
             GLib.create_dir(config_path)
 
+        # Todo: 2) Break this into two methods. Check/create praw.ini file.
         if os.path.exists(file_path):
             logger.info('Praw Login File Found.')
         else:
@@ -63,8 +81,14 @@ class Configurator:
 
 
 class CussBotController:
+    """
+    Class for controlling CussBot startup.
+    """
 
     def __init__(self):
+        """
+        Initializes required sections: configparser + Scraper()
+        """
 
         # Praw session is set in praw_login()
         self.reddit = None
@@ -76,6 +100,15 @@ class CussBotController:
         self.s = Scraper()
 
     def bot_flow(self):
+        """
+        The bot's main logic.
+        1. Checks config files for settings.
+        2. Logs into PRAW.
+        3. Runs the scraper.
+
+        :return:
+        """
+
         # Configures scraper settings
         self.configure_scraper()
         # Logs into Praw
@@ -84,6 +117,10 @@ class CussBotController:
         self.test_scraper()
 
     def praw_login(self):
+        """
+
+        :return:
+        """
 
         # Read praw.ini config file for login info
         logger.info('Reading praw.ini file.')
@@ -109,6 +146,10 @@ class CussBotController:
         logger.info("PRAW Login Successful.")
 
     def configure_scraper(self):
+        """
+        Reads the scraper.ini config file for scraper settings, then sets them.
+        """
+
         # Attempts to read scraper.ini config
         try:
             self.config.read('Config/scraper.ini')
