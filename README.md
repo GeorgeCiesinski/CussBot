@@ -69,13 +69,19 @@ property
 
 derivatives
 
-| word_id | child_words  |
+| word_id | child_word   |
 | ------- | ------------ |
 | 3       | fucker       |
 | 3       | motherfucker | 
 
 
-## Contributing
+# Contributing
 
 At this time, contributions are not being accepted since this project is intended 
 to improve my abilities with both Git and Python. 
+
+
+# Special Thanks
+
+This project is dedicated to my grandma who passed away at the age of 92 while I was
+building this. 

@@ -267,6 +267,39 @@ class Database:
 
         return dialect, derogatory
 
+    def derivative_insertion(self, conn):
+
+        # Query database for words
+        select_all_from_cusswords = """
+        SELECT * FROM cusswords 
+        """
+
+        # Read config file
+        self.config.read('Config/words.ini')
+
+        rows = self.execute_select(conn, select_all_from_cusswords)
+
+        for row in rows:
+            word_id = row[0]
+            word = row[1]
+
+            # Check if derivative words exist by checking if the option exists
+            if self.config.has_option('Derivative', word):
+
+                # If derivative exists, load the derivatives into a derivative_words list
+                derivative_words = (self.config['Derivative'][word]).split(', ')
+                print(f'Derivatives for {word}: {derivative_words}')
+
+                # Insert each word in derivative_words list into derivatives table
+                for dword in derivative_words:
+
+                    insert_derivatives_query = f"""
+                    INSERT INTO derivatives (word_id, child_word)
+                    VALUES(\'{word_id}\', \'{dword}\');
+                    """
+
+                    self.execute_sql_no_return(conn, insert_derivatives_query)
+
     def start_database(self):
         """
         This method always needs to be run first.
@@ -280,6 +313,7 @@ class Database:
         # Checks if database exists
         if os.path.exists(db_directory):
             logger.info('Database has been found at ' + db_directory + '.')
+
         else:
             # Creates new database as cussbot.db does not exist
             logger.info('Database not found. Creating new database.')
@@ -292,6 +326,8 @@ class Database:
             self.word_list_insertion(conn)
             # Insert cussword properties into property table
             self.property_insertion(conn)
+            # Insert derivatives into derivatives table
+            self.derivative_insertion(conn)
             # Close connection
             self.close_conn(conn)
 
