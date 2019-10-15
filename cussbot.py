@@ -97,7 +97,7 @@ class CussBotController:
         # Reads config files
         self.config = configparser.RawConfigParser()
         # Scraper object used by CussBot
-        self.s = Scraper()
+        self.scraper = Scraper()
 
     def bot_flow(self):
         """
@@ -111,10 +111,12 @@ class CussBotController:
 
         # Configures scraper settings
         self.configure_scraper()
+
         # Logs into Praw
-        self.praw_login()
-        # Todo: Simple praw test, replace with meaningful methods
-        self.test_scraper()
+        self.reddit = self.praw_login()
+
+        # Simple praw test
+        self.scraper.praw_test(self.reddit, self.subreddit)
 
     def praw_login(self):
         """
@@ -135,7 +137,7 @@ class CussBotController:
 
         # Reddit API Login
         logger.info("Attempting PRAW login.")
-        self.reddit = praw.Reddit(
+        r = praw.Reddit(
             client_id=client_id,
             client_secret=client_secret,
             username=username,
@@ -144,6 +146,8 @@ class CussBotController:
         )
 
         logger.info("PRAW Login Successful.")
+
+        return r
 
     def configure_scraper(self):
         """
@@ -162,11 +166,6 @@ class CussBotController:
         else:
             logger.info('Scraper configured successfully.')
 
-    def test_scraper(self):
-        pass
-        # Database.create_database()
-        # Scraper.praw_test(self.s, self.reddit, self.subreddit)
-
 
 # Logging setup
 logging.basicConfig(filename='Logs/full_logs.log',
@@ -182,10 +181,16 @@ file_handler.setFormatter(formatter)
 # Adds FileHandler to Logger
 logger.addHandler(file_handler)
 
-# Checks Config directory and praw login
-Configurator.config_init()
+if __name__ == "__main__":
 
-# Create CussBotController object
-c = CussBotController()
-# Fires up the bot
-c.bot_flow()
+    # Checks Config directory and praw login
+    Configurator.config_init()
+
+    # Creates and starts the database
+    d = Database()
+    d.start_database()
+
+    # Create CussBotController object
+    c = CussBotController()
+    # Fires up the bot
+    c.bot_flow()

@@ -2,7 +2,6 @@ import configparser
 import logging
 import sqlite3
 import os
-import words
 
 
 class Database:
@@ -215,7 +214,6 @@ class Database:
         for row in rows:
             word_id = row[0]
             word = row[1]
-            print(word)
 
             word_properties = self.property_assigner(word)
             dialect = word_properties[0]
@@ -288,7 +286,6 @@ class Database:
 
                 # If derivative exists, load the derivatives into a derivative_words list
                 derivative_words = (self.config['Derivative'][word]).split(', ')
-                print(f'Derivatives for {word}: {derivative_words}')
 
                 # Insert each word in derivative_words list into derivatives table
                 for dword in derivative_words:
@@ -313,6 +310,7 @@ class Database:
         # Checks if database exists
         if os.path.exists(db_directory):
             logger.info('Database has been found at ' + db_directory + '.')
+            print("Database found.")
 
         else:
             # Creates new database as cussbot.db does not exist
@@ -320,6 +318,7 @@ class Database:
 
             # Creates connection object. This also creates the database if doesn't exist.
             conn = self.create_connection(db_directory)
+            print("Creating database for the first time. Please wait while this process completes.")
             # Create word tables
             self.create_word_tables(conn)
             # Insert all swearwords except derivatives into cusswords table
@@ -330,6 +329,7 @@ class Database:
             self.derivative_insertion(conn)
             # Close connection
             self.close_conn(conn)
+            print("Successfully created database.")
 
 
 """
@@ -356,4 +356,3 @@ if __name__ == "__main__":
     d = Database()
     # Starts the database
     d.start_database()
-
