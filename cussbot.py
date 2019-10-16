@@ -7,6 +7,72 @@ from cuss_scraper import Scraper
 from Database import Database
 
 
+class CussBotController:
+    """
+    Class for controlling CussBot startup.
+    """
+
+    def __init__(self):
+        """
+        Initializes required sections: configparser + Scraper()
+        """
+
+        # Reads config files
+        self.config = configparser.RawConfigParser()
+        # Scraper object used by CussBot
+        self.scraper = Scraper()
+
+    def bot_flow(self):
+        """
+        The bot's main logic.
+        1. Checks config files for settings.
+        2. Logs into PRAW.
+        3. Runs the scraper.
+
+        :return:
+        """
+
+        # Configures scraper settings
+        scraper_settings = ScraperSetter(self.config)
+
+        # Logs into Praw
+        reddit = self.praw_login()
+
+        # Simple praw test
+        self.scraper.scraper_flow(scraper_settings, reddit)
+
+    def praw_login(self):
+        """
+
+        :return:
+        """
+
+        # Read praw.ini config file for login info
+        logger.info('Reading praw.ini file.')
+        self.config.read('Config/praw.ini')
+
+        # Assign login credentials using .ini file
+        client_id = self.config['Praw Login']['client_id']
+        client_secret = self.config['Praw Login']['client_secret']
+        username = self.config['Praw Login']['username']
+        password = self.config['Praw Login']['password']
+        user_agent = self.config['Praw Login']['user_agent']
+
+        # Reddit API Login
+        logger.info("Attempting PRAW login.")
+        r = praw.Reddit(
+            client_id=client_id,
+            client_secret=client_secret,
+            username=username,
+            password=password,
+            user_agent=user_agent
+        )
+
+        logger.info("PRAW Login Successful.")
+
+        return r
+
+
 # Class manages the config directory and mandatory login file
 class Configurator:
     """
@@ -80,84 +146,23 @@ class Configurator:
             Configurator.create_empty_login(config_dir, file_name)
 
 
-class CussBotController:
-    """
-    Class for controlling CussBot startup.
-    """
+class ScraperSetter:
 
-    def __init__(self):
-        """
-        Initializes required sections: configparser + Scraper()
-        """
-
-        # Praw session is set in praw_login()
-        self.reddit = None
-        # Subreddit configured in scraper.ini
-        self.subreddit = None
-        # Reads config files
-        self.config = configparser.RawConfigParser()
-        # Scraper object used by CussBot
-        self.scraper = Scraper()
-
-    def bot_flow(self):
-        """
-        The bot's main logic.
-        1. Checks config files for settings.
-        2. Logs into PRAW.
-        3. Runs the scraper.
-
-        :return:
-        """
-
-        # Configures scraper settings
-        self.configure_scraper()
-
-        # Logs into Praw
-        self.reddit = self.praw_login()
-
-        # Simple praw test
-        self.scraper.praw_test(self.reddit, self.subreddit)
-
-    def praw_login(self):
-        """
-
-        :return:
-        """
-
-        # Read praw.ini config file for login info
-        logger.info('Reading praw.ini file.')
-        self.config.read('Config/praw.ini')
-
-        # Assign login credentials using .ini file
-        client_id = self.config['Praw Login']['client_id']
-        client_secret = self.config['Praw Login']['client_secret']
-        username = self.config['Praw Login']['username']
-        password = self.config['Praw Login']['password']
-        user_agent = self.config['Praw Login']['user_agent']
-
-        # Reddit API Login
-        logger.info("Attempting PRAW login.")
-        r = praw.Reddit(
-            client_id=client_id,
-            client_secret=client_secret,
-            username=username,
-            password=password,
-            user_agent=user_agent
-        )
-
-        logger.info("PRAW Login Successful.")
-
-        return r
-
-    def configure_scraper(self):
+    def __init__(self, config):
         """
         Reads the scraper.ini config file for scraper settings, then sets them.
         """
 
         # Attempts to read scraper.ini config
         try:
-            self.config.read('Config/scraper.ini')
-            self.subreddit = self.config['Comments']['subreddit']
+            config.read('Config/scraper.ini')
+            self.subreddit = config['Comments']['subreddit']
+            self.find_universal = config['Words']['universal']
+            self.find_brit_aus = config['Words']['brit_aus']
+            self.find_other = config['Words']['other']
+            self.find_universal_derogatory = config['Words']['universal_derogatory']
+            self.find_brit_aus_derogatory = config['Words']['brit_aus_derogatory']
+
         except KeyError:
             logger.exception("Failed to configure scraper due to KeyError.")
         except:
