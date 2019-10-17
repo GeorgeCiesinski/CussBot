@@ -19,8 +19,6 @@ class CussBotController:
 
         # Reads config files
         self.config = configparser.RawConfigParser()
-        # Scraper object used by CussBot
-        self.scraper = Scraper()
 
     def bot_flow(self):
         """
@@ -39,7 +37,7 @@ class CussBotController:
         reddit = self.praw_login()
 
         # Starts the Scraper
-        self.scraper.scraper_flow(scraper_settings, reddit)
+        s = Scraper(scraper_settings, reddit)
 
     def praw_login(self):
         """

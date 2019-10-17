@@ -52,7 +52,6 @@ class Database:
             self.close_conn(conn)
             print("Successfully created database.")
 
-    # Sets database directory
     @staticmethod
     def database_directory():
         """
@@ -71,6 +70,7 @@ class Database:
         db_directory = os.path.join(db_dir, file_name)
         logger.info(f'Successfully joined {db_dir} and {file_name} into {db_directory}')
         return db_directory
+    # Sets database directory
 
     @staticmethod
     def create_connection(db_directory):
