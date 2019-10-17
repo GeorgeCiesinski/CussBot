@@ -18,6 +18,40 @@ class Database:
         self.brit_aus_derogatory = None
         self.other = None
 
+    def start_database(self):
+        """
+        This method always needs to be run first.
+        - Creates db if doesn't exist
+        - Creates tables in db if they do not exist
+        """
+
+        # Sets database directory
+        db_directory = self.database_directory()
+
+        # Checks if database exists
+        if os.path.exists(db_directory):
+            logger.info('Database has been found at ' + db_directory + '.')
+            print("Database found.")
+
+        else:
+            # Creates new database as cussbot.db does not exist
+            logger.info('Database not found. Creating new database.')
+
+            # Creates connection object. This also creates the database if doesn't exist.
+            conn = self.create_connection(db_directory)
+            print("Creating database for the first time. Please wait while this process completes.")
+            # Create word tables
+            self.create_word_tables(conn)
+            # Insert all swearwords except derivatives into cusswords table
+            self.word_list_insertion(conn)
+            # Insert cussword properties into property table
+            self.property_insertion(conn)
+            # Insert derivatives into derivatives table
+            self.derivative_insertion(conn)
+            # Close connection
+            self.close_conn(conn)
+            print("Successfully created database.")
+
     # Sets database directory
     @staticmethod
     def database_directory():
@@ -62,6 +96,38 @@ class Database:
         # Returns connection object
         return conn
 
+    # Creates word table for the first time
+    def create_word_tables(self, conn):
+        """
+        Executes queries to create word tables.
+
+        :param conn:
+        """
+
+        sql_create_cusswords_table = """CREATE TABLE IF NOT EXISTS cusswords (
+        id integer PRIMARY KEY,
+        word text NOT NULL UNIQUE
+        );"""
+
+        sql_create_property_table = """CREATE TABLE IF NOT EXISTS property (
+        word_id integer NOT NULL,
+        property_name varchar(100) NOT NULL,
+        property_value varchar(100) NOT NULL
+        );"""
+
+        sql_create_derivative_table = """CREATE TABLE IF NOT EXISTS derivatives (
+        word_id integer NOT NULL,
+        child_word varchar(100) NOT NULL UNIQUE
+        );"""
+
+        if conn is not None:
+            # Create tables: cusswords, property, derivative
+            self.execute_sql_no_return(conn, sql_create_cusswords_table)
+            self.execute_sql_no_return(conn, sql_create_property_table)
+            self.execute_sql_no_return(conn, sql_create_derivative_table)
+        else:
+            logger.info('Unable to create word tables as there is no connection.')
+
     @staticmethod
     def close_conn(conn):
         """
@@ -76,6 +142,152 @@ class Database:
         except:
             logger.exception('Database connection failed to close.')
             raise
+
+    def word_list_insertion(self, conn):
+        """
+        Creates cusswords list by reading words.ini config file.
+
+        :param conn:
+        """
+
+        self.config.read('Config/words.ini')
+
+        # Splits strings from words.ini into usable lists
+        self.universal = (self.config['Words']['universal']).split(', ')
+        self.universal_derogatory = (self.config['Derogatory']['universal']).split(', ')
+        self.brit_aus = (self.config['Words']['brit_aus']).split(', ')
+        self.brit_aus_derogatory = (self.config['Derogatory']['brit_aus']).split(', ')
+        self.other = (self.config['Words']['other']).split(', ')
+
+        # Creates list of list
+        cusswords_list = [
+            self.universal,
+            self.universal_derogatory,
+            self.brit_aus,
+            self.brit_aus_derogatory,
+            self.other
+            ]
+
+        for word_list in cusswords_list:
+            self.insert_list_into_db(conn, word_list)
+
+    def insert_list_into_db(self, conn, word_list):
+        """
+        Runs query which inserts words in word_list into cusswords table.
+
+        :param conn:
+        :param word_list:
+        """
+
+        if conn is not None:
+
+            for l_word in word_list:
+
+                sql_insert_into_cusswords = f"""
+                INSERT INTO cusswords (word)
+                VALUES(\'{l_word}\');
+                """
+
+                self. execute_sql_no_return(conn, sql_insert_into_cusswords)
+
+    def property_assigner(self, word):
+        """
+        Assigns each word a property.
+
+        :param word:
+        :return: dialect and derogatory properties
+        :rtype: tuple
+        """
+
+        # Sets dialect and derogatory values
+        if word in self.universal:
+            dialect = 'universal'
+            derogatory = 'false'
+        elif word in self.universal_derogatory:
+            dialect = 'universal'
+            derogatory = 'true'
+        elif word in self.brit_aus:
+            dialect = 'brit_aus'
+            derogatory = 'false'
+        elif word in self.brit_aus_derogatory:
+            dialect = 'brit_aus'
+            derogatory = 'true'
+        elif word in self.other:
+            dialect = 'other'
+            derogatory = 'false'
+        else:
+            logger.info(f'The word {word} does not appear in any list.')
+
+        return dialect, derogatory
+
+    def property_insertion(self, conn):
+        """
+        Creates queries to insert the property of each word into the property table.
+
+        :param conn:
+        """
+
+        select_all_from_cusswords = """
+        SELECT * FROM cusswords 
+        """
+
+        rows = self.execute_select(conn, select_all_from_cusswords)
+
+        for row in rows:
+            word_id = row[0]
+            word = row[1]
+
+            word_properties = self.property_assigner(word)
+            dialect = word_properties[0]
+            derogatory = word_properties[1]
+
+            insert_dialect_query = f"""
+            INSERT INTO property (word_id, property_name, property_value)
+            VALUES(\'{word_id}\', 'dialect', \'{dialect}\');
+            """
+
+            insert_derogatory_query = f"""
+            INSERT INTO property (word_id, property_name, property_value)
+            VALUES(\'{word_id}\', 'derogatory', \'{derogatory}\');
+            """
+
+            # Insert dialect property value into table
+            self.execute_sql_no_return(conn, insert_dialect_query)
+
+            # Insert derogatory property value into table
+            self.execute_sql_no_return(conn, insert_derogatory_query)
+
+    def derivative_insertion(self, conn):
+        """
+        Checks Words.ini for each word that has derivatives, then adds the derivatives into derivatives table
+
+        :param conn:
+        """
+
+        # Read config file
+        self.config.read('Config/words.ini')
+
+        rows = self.execute_select(conn, Queries.select_all_from_cusswords)
+
+        for row in rows:
+            word_id = row[0]
+            word = row[1]
+
+            # Check if derivative words exist by checking if the option exists
+            if self.config.has_option('Derivative', word):
+
+                # If derivative exists, load the derivatives into a derivative_words list
+                derivative_words = (self.config['Derivative'][word]).split(', ')
+
+                # Insert each word in derivative_words list into derivatives table
+                for dword in derivative_words:
+
+                    insert_derivatives_query = f"""
+                    INSERT INTO derivatives (word_id, child_word)
+                    VALUES(\'{word_id}\', \'{dword}\');
+                    """
+
+                    self.execute_sql_no_return(conn, insert_derivatives_query)
 
     @staticmethod
     def execute_sql_no_return(conn, query):
@@ -119,217 +331,16 @@ class Database:
         rows = c.fetchall()
         return rows
 
-    # Creates word table for the first time
-    def create_word_tables(self, conn):
-        """
-        Executes queries to create word tables.
 
-        :param conn:
-        """
+class Queries:
 
-        sql_create_cusswords_table = """CREATE TABLE IF NOT EXISTS cusswords (
-        id integer PRIMARY KEY,
-        word text NOT NULL UNIQUE
-        );"""
+    """
+    Shared Queries
+    """
 
-        sql_create_property_table = """CREATE TABLE IF NOT EXISTS property (
-        word_id integer NOT NULL,
-        property_name varchar(100) NOT NULL,
-        property_value varchar(100) NOT NULL
-        );"""
-
-        sql_create_derivative_table = """CREATE TABLE IF NOT EXISTS derivatives (
-        word_id integer NOT NULL,
-        child_word varchar(100) NOT NULL UNIQUE
-        );"""
-
-        if conn is not None:
-            # Create tables: cusswords, property, derivative
-            self.execute_sql_no_return(conn, sql_create_cusswords_table)
-            self.execute_sql_no_return(conn, sql_create_property_table)
-            self.execute_sql_no_return(conn, sql_create_derivative_table)
-        else:
-            logger.info('Unable to create word tables as there is no connection.')
-
-    def insert_list_into_db(self, conn, word_list):
-        """
-        Runs query which inserts words in word_list into cusswords table.
-
-        :param conn:
-        :param word_list:
-        """
-
-        if conn is not None:
-
-            for l_word in word_list:
-
-                sql_insert_into_cusswords = f"""
-                INSERT INTO cusswords (word)
-                VALUES(\'{l_word}\');
-                """
-
-                self. execute_sql_no_return(conn, sql_insert_into_cusswords)
-
-    def word_list_insertion(self, conn):
-        """
-        Creates cusswords list by reading words.ini config file.
-
-        :param conn:
-        """
-
-        self.config.read('Config/words.ini')
-
-        # Splits strings from words.ini into usable lists
-        self.universal = (self.config['Words']['universal']).split(', ')
-        self.universal_derogatory = (self.config['Derogatory']['universal']).split(', ')
-        self.brit_aus = (self.config['Words']['brit_aus']).split(', ')
-        self.brit_aus_derogatory = (self.config['Derogatory']['brit_aus']).split(', ')
-        self.other = (self.config['Words']['other']).split(', ')
-
-        # Creates list of list
-        cusswords_list = [
-            self.universal,
-            self.universal_derogatory,
-            self.brit_aus,
-            self.brit_aus_derogatory,
-            self.other
-            ]
-
-        for word_list in cusswords_list:
-            self.insert_list_into_db(conn, word_list)
-
-    def property_insertion(self, conn):
-        """
-        Creates queries to insert the property of each word into the property table.
-
-        :param conn:
-        """
-
-        select_all_from_cusswords = """
-        SELECT * FROM cusswords 
-        """
-
-        rows = self.execute_select(conn, select_all_from_cusswords)
-
-        for row in rows:
-            word_id = row[0]
-            word = row[1]
-
-            word_properties = self.property_assigner(word)
-            dialect = word_properties[0]
-            derogatory = word_properties[1]
-
-            insert_dialect_query = f"""
-            INSERT INTO property (word_id, property_name, property_value)
-            VALUES(\'{word_id}\', 'dialect', \'{dialect}\');
+    select_all_from_cusswords = """
+            SELECT * FROM cusswords 
             """
-
-            insert_derogatory_query = f"""
-            INSERT INTO property (word_id, property_name, property_value)
-            VALUES(\'{word_id}\', 'derogatory', \'{derogatory}\');
-            """
-
-            # Insert dialect property value into table
-            self.execute_sql_no_return(conn, insert_dialect_query)
-
-            # Insert derogatory property value into table
-            self.execute_sql_no_return(conn, insert_derogatory_query)
-
-    def property_assigner(self, word):
-        """
-        Assigns each word a property.
-
-        :param word:
-        :return: dialect and derogatory properties
-        :rtype: tuple
-        """
-
-        # Sets dialect and derogatory values
-        if word in self.universal:
-            dialect = 'universal'
-            derogatory = 'false'
-        elif word in self.universal_derogatory:
-            dialect = 'universal'
-            derogatory = 'true'
-        elif word in self.brit_aus:
-            dialect = 'brit_aus'
-            derogatory = 'false'
-        elif word in self.brit_aus_derogatory:
-            dialect = 'brit_aus'
-            derogatory = 'true'
-        elif word in self.other:
-            dialect = 'other'
-            derogatory = 'false'
-        else:
-            logger.info(f'The word {word} does not appear in any list.')
-
-        return dialect, derogatory
-
-    def derivative_insertion(self, conn):
-
-        # Query database for words
-        select_all_from_cusswords = """
-        SELECT * FROM cusswords 
-        """
-
-        # Read config file
-        self.config.read('Config/words.ini')
-
-        rows = self.execute_select(conn, select_all_from_cusswords)
-
-        for row in rows:
-            word_id = row[0]
-            word = row[1]
-
-            # Check if derivative words exist by checking if the option exists
-            if self.config.has_option('Derivative', word):
-
-                # If derivative exists, load the derivatives into a derivative_words list
-                derivative_words = (self.config['Derivative'][word]).split(', ')
-
-                # Insert each word in derivative_words list into derivatives table
-                for dword in derivative_words:
-
-                    insert_derivatives_query = f"""
-                    INSERT INTO derivatives (word_id, child_word)
-                    VALUES(\'{word_id}\', \'{dword}\');
-                    """
-
-                    self.execute_sql_no_return(conn, insert_derivatives_query)
-
-    def start_database(self):
-        """
-        This method always needs to be run first.
-        - Creates db if doesn't exist
-        - Creates tables in db if they do not exist
-        """
-
-        # Sets database directory
-        db_directory = self.database_directory()
-
-        # Checks if database exists
-        if os.path.exists(db_directory):
-            logger.info('Database has been found at ' + db_directory + '.')
-            print("Database found.")
-
-        else:
-            # Creates new database as cussbot.db does not exist
-            logger.info('Database not found. Creating new database.')
-
-            # Creates connection object. This also creates the database if doesn't exist.
-            conn = self.create_connection(db_directory)
-            print("Creating database for the first time. Please wait while this process completes.")
-            # Create word tables
-            self.create_word_tables(conn)
-            # Insert all swearwords except derivatives into cusswords table
-            self.word_list_insertion(conn)
-            # Insert cussword properties into property table
-            self.property_insertion(conn)
-            # Insert derivatives into derivatives table
-            self.derivative_insertion(conn)
-            # Close connection
-            self.close_conn(conn)
-            print("Successfully created database.")
 
 
 """

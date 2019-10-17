@@ -38,11 +38,12 @@ class CussBotController:
         # Logs into Praw
         reddit = self.praw_login()
 
-        # Simple praw test
+        # Starts the Scraper
         self.scraper.scraper_flow(scraper_settings, reddit)
 
     def praw_login(self):
         """
+        Logs into PRAW, returns the PRAW object.
 
         :return:
         """

@@ -10,26 +10,32 @@ class Scraper:
     @staticmethod
     def scraper_flow(settings, reddit):
 
-        # Todo: Below is only a test. Rewrite this into better code.
-        # Todo: Use this to control various scrapers that search for different conditions
+        # Apply settings to scraper_flow
         subreddit = settings.subreddit
-        universal = settings.find_universal
-        brit_aus = settings.find_brit_aus
-        other = settings.find_other
-        universal_derogatory = settings.find_universal_derogatory
-        brit_aus_derogatory = settings.find_brit_aus_derogatory
 
-        scraper_settings = f"""
-The scraper settings are: 
+        scraper_settings = [
+            settings.find_universal,
+            settings.find_brit_aus,
+            settings.find_other,
+            settings.find_universal_derogatory,
+            settings.find_brit_aus_derogatory
+        ]
+
+        # Empty word list
+        scraper_words = []
+
+        logger.debug(f"""
+Scraper started with the below settings: 
 subreddit = {subreddit}
-universal = {universal}
-brit_aus = {brit_aus}
-other = {other}
-universal_derogatory = {universal_derogatory}
-brit_aus_derogatory = {brit_aus_derogatory}
-"""
+universal = {scraper_settings[0]}
+brit_aus = {scraper_settings[1]}
+other = {scraper_settings[2]}
+universal_derogatory = {scraper_settings[3]}
+brit_aus_derogatory = {scraper_settings[4]}
+""")
 
-        print(scraper_settings)
+        if scraper_settings[0] == "True":
+            pass
 
     # Simple test if bot is finding comments
     @staticmethod
