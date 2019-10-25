@@ -33,11 +33,15 @@ class CussBotController:
         # Configures scraper settings
         scraper_settings = ScraperSetter(self.config)
 
+        # Creates and starts the database
+        d = Database()
+        d.start_database()
+
         # Logs into Praw
         reddit = self.praw_login()
 
         # Starts the Scraper
-        s = Scraper(scraper_settings, reddit)
+        s = Scraper(scraper_settings, reddit, d)
 
     def praw_login(self):
         """
@@ -161,6 +165,7 @@ class ScraperSetter:
             self.find_other = config['Words']['other']
             self.find_universal_derogatory = config['Words']['universal_derogatory']
             self.find_brit_aus_derogatory = config['Words']['brit_aus_derogatory']
+            self.find_derivatives = config['Words']['derivatives']
 
         except KeyError:
             logger.exception("Failed to configure scraper due to KeyError.")
@@ -189,10 +194,6 @@ if __name__ == "__main__":
 
     # Checks Config directory and praw login
     Configurator.config_init()
-
-    # Creates and starts the database
-    d = Database()
-    d.start_database()
 
     # Create CussBotController object
     c = CussBotController()

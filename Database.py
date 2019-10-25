@@ -18,6 +18,8 @@ class Database:
         self.brit_aus_derogatory = None
         self.other = None
 
+        self.db_directory = None
+
     def start_database(self):
         """
         This method always needs to be run first.
@@ -27,6 +29,7 @@ class Database:
 
         # Sets database directory
         db_directory = self.database_directory()
+        self.db_directory = db_directory
 
         # Checks if database exists
         if os.path.exists(db_directory):
@@ -42,11 +45,11 @@ class Database:
             print("Creating database for the first time. Please wait while this process completes.")
             # Create word tables
             self.create_word_tables(conn)
-            # Insert all swearwords except derivatives into cusswords table
+            # Insert all swearwords except derivatives into cussword table
             self.word_list_insertion(conn)
             # Insert cussword properties into property table
             self.property_insertion(conn)
-            # Insert derivatives into derivatives table
+            # Insert derivatives into derivative table
             self.derivative_insertion(conn)
             # Close connection
             self.close_conn(conn)
@@ -96,38 +99,6 @@ class Database:
         # Returns connection object
         return conn
 
-    # Creates word table for the first time
-    def create_word_tables(self, conn):
-        """
-        Executes queries to create word tables.
-
-        :param conn:
-        """
-
-        sql_create_cusswords_table = """CREATE TABLE IF NOT EXISTS cusswords (
-        id integer PRIMARY KEY,
-        word text NOT NULL UNIQUE
-        );"""
-
-        sql_create_property_table = """CREATE TABLE IF NOT EXISTS property (
-        word_id integer NOT NULL,
-        property_name varchar(100) NOT NULL,
-        property_value varchar(100) NOT NULL
-        );"""
-
-        sql_create_derivative_table = """CREATE TABLE IF NOT EXISTS derivatives (
-        word_id integer NOT NULL,
-        child_word varchar(100) NOT NULL UNIQUE
-        );"""
-
-        if conn is not None:
-            # Create tables: cusswords, property, derivative
-            self.execute_sql_no_return(conn, sql_create_cusswords_table)
-            self.execute_sql_no_return(conn, sql_create_property_table)
-            self.execute_sql_no_return(conn, sql_create_derivative_table)
-        else:
-            logger.info('Unable to create word tables as there is no connection.')
-
     @staticmethod
     def close_conn(conn):
         """
@@ -142,6 +113,38 @@ class Database:
         except:
             logger.exception('Database connection failed to close.')
             raise
+
+    # Creates word table for the first time
+    def create_word_tables(self, conn):
+        """
+        Executes queries to create word tables.
+
+        :param conn:
+        """
+
+        sql_create_cussword_table = """CREATE TABLE IF NOT EXISTS cussword (
+        id integer PRIMARY KEY,
+        word text NOT NULL UNIQUE
+        );"""
+
+        sql_create_property_table = """CREATE TABLE IF NOT EXISTS property (
+        word_id integer NOT NULL,
+        property_name varchar(100) NOT NULL,
+        property_value varchar(100) NOT NULL
+        );"""
+
+        sql_create_derivative_table = """CREATE TABLE IF NOT EXISTS derivative (
+        word_id integer NOT NULL,
+        child_word varchar(100) NOT NULL UNIQUE
+        );"""
+
+        if conn is not None:
+            # Create tables: cussword, property, derivative
+            self.execute_sql_no_return(conn, sql_create_cussword_table)
+            self.execute_sql_no_return(conn, sql_create_property_table)
+            self.execute_sql_no_return(conn, sql_create_derivative_table)
+        else:
+            logger.info('Unable to create word tables as there is no connection.')
 
     def word_list_insertion(self, conn):
         """
@@ -173,7 +176,7 @@ class Database:
 
     def insert_list_into_db(self, conn, word_list):
         """
-        Runs query which inserts words in word_list into cusswords table.
+        Runs query which inserts words in word_list into cussword table.
 
         :param conn:
         :param word_list:
@@ -183,12 +186,12 @@ class Database:
 
             for l_word in word_list:
 
-                sql_insert_into_cusswords = f"""
-                INSERT INTO cusswords (word)
+                sql_insert_into_cussword = f"""
+                INSERT INTO cussword (word)
                 VALUES(\'{l_word}\');
                 """
 
-                self. execute_sql_no_return(conn, sql_insert_into_cusswords)
+                self. execute_sql_no_return(conn, sql_insert_into_cussword)
 
     def property_assigner(self, word):
         """
@@ -227,11 +230,11 @@ class Database:
         :param conn:
         """
 
-        select_all_from_cusswords = """
-        SELECT * FROM cusswords 
+        select_all_from_cussword = """
+        SELECT * FROM cussword 
         """
 
-        rows = self.execute_select(conn, select_all_from_cusswords)
+        rows = self.execute_select(conn, select_all_from_cussword)
 
         for row in rows:
             word_id = row[0]
@@ -259,7 +262,7 @@ class Database:
 
     def derivative_insertion(self, conn):
         """
-        Checks Words.ini for each word that has derivatives, then adds the derivatives into derivatives table
+        Checks Words.ini for each word that has derivatives, then adds the derivatives into derivative table
 
         :param conn:
         """
@@ -267,7 +270,7 @@ class Database:
         # Read config file
         self.config.read('Config/words.ini')
 
-        rows = self.execute_select(conn, Queries.select_all_from_cusswords)
+        rows = self.execute_select(conn, Queries.select_all_from_cussword)
 
         for row in rows:
             word_id = row[0]
@@ -279,15 +282,50 @@ class Database:
                 # If derivative exists, load the derivatives into a derivative_words list
                 derivative_words = (self.config['Derivative'][word]).split(', ')
 
-                # Insert each word in derivative_words list into derivatives table
+                # Insert each word in derivative_words list into derivative table
                 for dword in derivative_words:
 
-                    insert_derivatives_query = f"""
-                    INSERT INTO derivatives (word_id, child_word)
+                    insert_derivative_query = f"""
+                    INSERT INTO derivative (word_id, child_word)
                     VALUES(\'{word_id}\', \'{dword}\');
                     """
 
-                    self.execute_sql_no_return(conn, insert_derivatives_query)
+                    self.execute_sql_no_return(conn, insert_derivative_query)
+
+    def append_scraper_words(self, word_list, dialect, derogatory):
+
+        select_specified = f"""
+SELECT word FROM cussword
+WHERE id IN (
+SELECT word_id FROM property WHERE property_name = 'dialect' AND property_value = \'{dialect}\'
+INTERSECT
+SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_value = \'{derogatory}\'
+);
+        """
+
+        # Creates connection to db
+        conn = self.create_connection(self.db_directory)
+
+        # Executes query after setting dialect and derogatory
+        rows = self.execute_select(conn, select_specified)
+
+        # Closes db
+        self.close_conn(conn)
+
+        # Appends words to word_list
+
+        logger.info(f"Select query returned the following rows: \n {rows}")
+
+        for row in rows:
+            word_list.append(row[0])
+
+        return word_list
+
+    def append_derivatives(self, word_list):
+
+        for word in word_list:
+            pass
+
 
     @staticmethod
     def execute_sql_no_return(conn, query):
@@ -338,9 +376,14 @@ class Queries:
     Shared Queries
     """
 
-    select_all_from_cusswords = """
-            SELECT * FROM cusswords 
+    select_all_from_cussword = """
+            SELECT * FROM cussword 
             """
+
+    select_universal = """
+    SELECT * FROM cussword
+    WHERE 
+    """
 
 
 """
