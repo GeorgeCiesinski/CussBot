@@ -62,8 +62,12 @@ class Scraper:
         return scraper_settings
 
     def scraper_flow(self):
+
         # Adds words to self.scraper_words as per settings
         self.determine_set_words()
+
+        # Begins scraping subreddit
+        self.subreddit_scraper(self.reddit, self.subreddit)
 
     def determine_set_words(self):
         """
@@ -76,7 +80,6 @@ class Scraper:
             dialect = 'universal'
             derogatory = 'false'
             self.add_scraper_words(dialect, derogatory)
-
         # brit_aus
         if self.scraper_settings[1] == "True":
             # Query database for all words with brit_aus dialect but not derogatory
@@ -102,8 +105,10 @@ class Scraper:
             derogatory = 'true'
             self.add_scraper_words(dialect, derogatory)
         if self.scraper_settings[5] == "True":
-            logger.info("Appending derivatives to scraper_words.")
+            logger.info('Appending derivatives to scraper_words.')
             Database.append_derivatives(self.database, self.scraper_words)
+
+        logger.info(f'Finished generating scraper_words list.')
 
     def add_scraper_words(self, dialect, derogatory):
         """
@@ -116,27 +121,23 @@ class Scraper:
         logger.info(f'Scraper has appended dialect: \'{dialect}\', derogatory: \'{derogatory}\'')
 
     # Simple test if bot is finding comments
-    @staticmethod
-    def praw_test(reddit, subreddit):
+    def subreddit_scraper(self, reddit, subreddit):
 
-        logger.info('Praw Test Started.')
+        logger.info(f'Scraping /r/{subreddit} for the specified words below:\n {self.scraper_words}')
 
         # Subreddits | Subreddits go here
         s = reddit.subreddit(subreddit)
 
-        """
-        Test goes here
-        """
-
         for comment in s.stream.comments():
-            c = Comment(comment)
-            print(c.body)
+            for word in self.scraper_words:
+                if word in comment.body:
+                    c = Comment(comment)
+                    self.scraper_test(c)
 
-        """
-        Test complete
-        """
+        logger.info(f'Finished scraping /r/{subreddit}.')
 
-        logger.info('Praw Test Complete.')
+    def scraper_test(self, comment):
+        print(comment.body)
 
 
 # Logger setup

@@ -331,12 +331,20 @@ SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_val
         return word_list
 
     def append_derivatives(self, word_list):
+        """
+        Accepts word_list and appends each derivative for words with existing derivatives, then returns list.
+
+        :param word_list:
+        :return: word_list
+        :rtype: list
+        """
 
         # Creates connection to db
         conn = self.create_connection(self.db_directory)
 
         for word in word_list:
 
+            # Query which searches derivative table for specified word
             select_derivative_query = f"""
 SELECT child_word
 FROM derivative d
@@ -360,11 +368,6 @@ WHERE c.word = \'{word}\'
         self.close_conn(conn)
 
         return word_list
-
-
-
-
-
 
     @staticmethod
     def execute_sql_no_return(conn, query):
