@@ -102,8 +102,8 @@ class Scraper:
             derogatory = 'true'
             self.add_scraper_words(dialect, derogatory)
         if self.scraper_settings[5] == "True":
-            logger.info("Append derivatives as well.")
-
+            logger.info("Appending derivatives to scraper_words.")
+            Database.append_derivatives(self.database, self.scraper_words)
 
     def add_scraper_words(self, dialect, derogatory):
         """

@@ -293,8 +293,17 @@ class Database:
                     self.execute_sql_no_return(conn, insert_derivative_query)
 
     def append_scraper_words(self, word_list, dialect, derogatory):
+        """
+        Adds words to word_list that match the dialect and derogatory value passed to this method.
 
-        select_specified = f"""
+        :param word_list:
+        :param dialect:
+        :param derogatory:
+        :return: word_list
+        :rtype: list
+        """
+
+        select_specified_query = f"""
 SELECT word FROM cussword
 WHERE id IN (
 SELECT word_id FROM property WHERE property_name = 'dialect' AND property_value = \'{dialect}\'
@@ -307,7 +316,7 @@ SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_val
         conn = self.create_connection(self.db_directory)
 
         # Executes query after setting dialect and derogatory
-        rows = self.execute_select(conn, select_specified)
+        rows = self.execute_select(conn, select_specified_query)
 
         # Closes db
         self.close_conn(conn)
@@ -323,8 +332,38 @@ SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_val
 
     def append_derivatives(self, word_list):
 
+        # Creates connection to db
+        conn = self.create_connection(self.db_directory)
+
         for word in word_list:
-            pass
+
+            select_derivative_query = f"""
+SELECT child_word
+FROM derivative d
+INNER JOIN cussword c
+ON (d.word_id = c.id)
+WHERE c.word = \'{word}\'
+            """
+
+            # Executes query after setting dialect and derogatory
+            rows = self.execute_select(conn, select_derivative_query)
+
+            # Checks if derivative words exist
+            if len(rows) > 0:
+
+                # Appends derivative words to word_list
+                for row in rows:
+                    word_list.append(row[0])
+                    logger.info(f'The word {row[0]} has been added to word_list.')
+
+        # Closes db
+        self.close_conn(conn)
+
+        return word_list
+
+
+
+
 
 
     @staticmethod
