@@ -1,6 +1,7 @@
 import logging
 from Comment import Comment
 from Database import Database
+import configparser
 
 
 class Scraper:
@@ -12,6 +13,9 @@ class Scraper:
         :param settings:
         :param reddit:
         """
+
+        # Sets up config
+        self.config = configparser.RawConfigParser()
 
         # Sets reddit
         self.reddit = reddit
@@ -68,6 +72,24 @@ class Scraper:
 
         # Begins scraping subreddit
         self.subreddit_scraper(self.reddit, self.subreddit)
+
+    def run_check(self):
+        """
+        Reads the scraper.ini config file to see if it should run the next cycle.
+
+        :return:
+        """
+
+        config = self.config
+
+        try:
+            config.read('Config/scraper.ini')
+            run = config['Scraper Flow']['run']
+        except:
+            logger.exception("Failed to read scraper.ini.")
+            raise
+
+        return run
 
     def determine_set_words(self):
         """
@@ -128,16 +150,35 @@ class Scraper:
         # Subreddits | Subreddits go here
         s = reddit.subreddit(subreddit)
 
-        for comment in s.stream.comments():
-            for word in self.scraper_words:
-                if word in comment.body:
-                    c = Comment(comment)
-                    self.scraper_test(c)
+        # Sets run variable to start comment scraping
+        run = self.run_check()
+
+        # For each comment: for each word in scraper_words, check if the word is present in the comment body
+        while run == 'true':
+            for comment in s.stream.comments():
+                run = self.run_check()
+                for word in self.scraper_words:
+                    if word in comment.body:
+                        c = Comment(comment)
+                        self.comment_analyzer(c)
 
         logger.info(f'Finished scraping /r/{subreddit}.')
 
-    def scraper_test(self, comment):
-        print(comment.body)
+    def comment_analyzer(self, comment):
+        """
+        Analyzer gets comment.
+        - Counts total number of words
+        - Counts total number of swear words
+        - Creates a list (or dict) of each swear word
+        - Increases the count of each swear word until all words are counted
+
+        - Stores comment id, author, subreddit, and above statistics
+
+        :param comment:
+        :return:
+        """
+
+        print(comment.id)
 
 
 # Logger setup
