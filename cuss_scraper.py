@@ -44,35 +44,6 @@ class Scraper:
         # Starts scraper logic
         self.scraper_flow()
 
-    @staticmethod
-    def setup_scraper(settings):
-        """
-        Creates list of scraping settings.
-
-        :param settings:
-        :return: list of settings
-        :rtype: list
-        """
-
-        scraper_settings = [
-            settings.find_universal,
-            settings.find_brit_aus,
-            settings.find_other,
-            settings.find_universal_derogatory,
-            settings.find_brit_aus_derogatory,
-            settings.find_derivatives
-        ]
-
-        return scraper_settings
-
-    def scraper_flow(self):
-
-        # Adds words to self.scraper_words as per settings
-        self.determine_set_words()
-
-        # Begins scraping subreddit
-        self.subreddit_scraper(self.reddit, self.subreddit)
-
     def run_check(self):
         """
         Reads the scraper.ini config file to see if it should run the next cycle.
@@ -85,16 +56,56 @@ class Scraper:
         try:
             config.read('Config/scraper.ini')
             run = config['Scraper Flow']['run']
+            logger.debug('Successfully read scraper.ini [Scraper Flow][Run].')
         except:
             logger.exception("Failed to read scraper.ini.")
             raise
 
+        logger.debug(f'scraper.ini [Scraper Flow][Run] set to {run}')
         return run
+
+    @staticmethod
+    def setup_scraper(settings):
+        """
+        Creates list of scraping settings.
+
+        :param settings:
+        :return: list of settings
+        :rtype: list
+        """
+
+        try:
+            scraper_settings = [
+                settings.find_universal,
+                settings.find_brit_aus,
+                settings.find_other,
+                settings.find_universal_derogatory,
+                settings.find_brit_aus_derogatory,
+                settings.find_derivatives
+            ]
+            logger.debug('scraper_settings applied successfully.')
+        except:
+            logger.exception('setup_scraper failed to apply scraper_settings.')
+            raise
+
+        return scraper_settings
+
+    def scraper_flow(self):
+
+        logger.info('Starting scraper_flow.')
+
+        # Adds words to self.scraper_words as per settings
+        self.determine_set_words()
+
+        # Begins scraping subreddit
+        self.subreddit_scraper(self.reddit, self.subreddit)
 
     def determine_set_words(self):
         """
         Determines words set in scraper_settings, calls method to add words to self.scraper_words
         """
+
+        logger.info('Starting determine_set_words.')
 
         # universal
         if self.scraper_settings[0] == "True":
@@ -130,7 +141,7 @@ class Scraper:
             logger.info('Appending derivatives to scraper_words.')
             Database.append_derivatives(self.database, self.scraper_words)
 
-        logger.info(f'Finished generating scraper_words list.')
+        logger.info('determine_set_words successfully generated scraper_words list.')
 
     def add_scraper_words(self, dialect, derogatory):
         """
@@ -144,6 +155,12 @@ class Scraper:
 
     # Simple test if bot is finding comments
     def subreddit_scraper(self, reddit, subreddit):
+        """
+        Loads comment stream from subreddit and checks each comment for words matching scraper_words list.
+
+        :param reddit:
+        :param subreddit:
+        """
 
         logger.info(f'Scraping /r/{subreddit} for the specified words below:\n {self.scraper_words}')
 
@@ -175,7 +192,6 @@ class Scraper:
         - Stores comment id, author, subreddit, and above statistics
 
         :param comment:
-        :return:
         """
 
         print(comment.id)

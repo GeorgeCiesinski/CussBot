@@ -20,15 +20,17 @@ class CussBotController:
         # Reads config files
         self.config = configparser.RawConfigParser()
 
+        logger.debug('Successfully initialized CussBotController.')
+
     def bot_flow(self):
         """
         The bot's main logic.
         1. Checks config files for settings.
         2. Logs into PRAW.
         3. Runs the scraper.
-
-        :return:
         """
+
+        logger.debug('Starting bot_flow.')
 
         # Configures scraper settings
         scraper_settings = ScraperSetter(self.config)
@@ -45,35 +47,43 @@ class CussBotController:
 
     def praw_login(self):
         """
-        Logs into PRAW, returns the PRAW object.
+        Logs into PRAW.
 
-        :return:
+        :return: Praw login
+        :rtype: object
         """
 
-        # Read praw.ini config file for login info
-        logger.info('Reading praw.ini file.')
-        self.config.read('Config/praw.ini')
+        try:
+            # Read praw.ini config file for login info
+            self.config.read('Config/praw.ini')
 
-        # Assign login credentials using .ini file
-        client_id = self.config['Praw Login']['client_id']
-        client_secret = self.config['Praw Login']['client_secret']
-        username = self.config['Praw Login']['username']
-        password = self.config['Praw Login']['password']
-        user_agent = self.config['Praw Login']['user_agent']
+            # Assign login credentials using .ini file
+            client_id = self.config['Praw Login']['client_id']
+            client_secret = self.config['Praw Login']['client_secret']
+            username = self.config['Praw Login']['username']
+            password = self.config['Praw Login']['password']
+            user_agent = self.config['Praw Login']['user_agent']
 
-        # Reddit API Login
-        logger.info("Attempting PRAW login.")
-        r = praw.Reddit(
-            client_id=client_id,
-            client_secret=client_secret,
-            username=username,
-            password=password,
-            user_agent=user_agent
-        )
+            logger.debug('Successfully read praw.ini file for login credentials.')
+        except:
+            logger.exception('Failed to read praw.ini file.')
 
-        logger.info("PRAW Login Successful.")
+        try:
+            # Reddit API Login
+            logger.info('Attempting PRAW login.')
+            r = praw.Reddit(
+                client_id=client_id,
+                client_secret=client_secret,
+                username=username,
+                password=password,
+                user_agent=user_agent
+            )
 
-        return r
+            logger.info('PRAW Login Successful.')
+
+            return r
+        except:
+            logger.exception('Failed Praw Login.')
 
 
 # Class manages the config directory and mandatory login file
@@ -90,6 +100,8 @@ class Configurator:
         :param directory:
         :param file_name:
         """
+
+        logger.debug('Starting create_empty_login.')
 
         # New Config Parser
         config = configparser.RawConfigParser(allow_no_value=True)
@@ -111,7 +123,7 @@ class Configurator:
         with open(file_path, 'w') as configfile:
             config.write(configfile)
 
-        logger.info("Successfully created empty Config file.")
+        logger.info('Successfully created empty Config file.')
 
     @staticmethod
     def config_init():
