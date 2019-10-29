@@ -168,6 +168,8 @@ class ScraperSetter:
         Reads the scraper.ini config file for scraper settings, then sets them.
         """
 
+        logger.info('ScraperSetter initialized.')
+
         # Attempts to read scraper.ini config
         try:
             config.read('Config/scraper.ini')
@@ -178,14 +180,13 @@ class ScraperSetter:
             self.find_universal_derogatory = config['Words']['universal_derogatory']
             self.find_brit_aus_derogatory = config['Words']['brit_aus_derogatory']
             self.find_derivatives = config['Words']['derivatives']
-
         except KeyError:
             logger.exception("Failed to configure scraper due to KeyError.")
         except:
             logger.exception("Failed to configure scraper.")
             raise
         else:
-            logger.info('Scraper configured successfully.')
+            logger.debug('Scraper configured successfully.')
 
 
 # Logging setup

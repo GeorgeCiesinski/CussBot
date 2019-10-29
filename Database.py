@@ -8,6 +8,8 @@ class Database:
 
     def __init__(self):
 
+        logger.info('Database initialized.')
+
         # Starts config parser to read words.ini
         self.config = configparser.RawConfigParser(allow_no_value=True)
 
@@ -27,18 +29,20 @@ class Database:
         - Creates tables in db if they do not exist
         """
 
+        logger.info('Starting start_database.')
+
         # Sets database directory
         db_directory = self.database_directory()
         self.db_directory = db_directory
 
         # Checks if database exists
         if os.path.exists(db_directory):
-            logger.info('Database has been found at ' + db_directory + '.')
+            logger.debug('Database has been found at ' + db_directory + '.')
             print("Database found.")
 
         else:
             # Creates new database as cussbot.db does not exist
-            logger.info('Database not found. Creating new database.')
+            logger.debug('Database not found. Creating new database.')
 
             # Creates connection object. This also creates the database if doesn't exist.
             conn = self.create_connection(db_directory)
@@ -53,7 +57,8 @@ class Database:
             self.derivative_insertion(conn)
             # Close connection
             self.close_conn(conn)
-            print("Successfully created database.")
+            logger.debug('Successfully created new database.')
+            print("Successfully created new database.")
 
     @staticmethod
     def database_directory():
@@ -71,9 +76,8 @@ class Database:
 
         # Creates a path for the Database
         db_directory = os.path.join(db_dir, file_name)
-        logger.info(f'Successfully joined {db_dir} and {file_name} into {db_directory}')
+        logger.debug(f'Successfully joined {db_dir} and {file_name} into {db_directory}')
         return db_directory
-    # Sets database directory
 
     @staticmethod
     def create_connection(db_directory):
@@ -143,8 +147,9 @@ class Database:
             self.execute_sql_no_return(conn, sql_create_cussword_table)
             self.execute_sql_no_return(conn, sql_create_property_table)
             self.execute_sql_no_return(conn, sql_create_derivative_table)
+            logger.debug('Successfully created the tables: cussword, property, and derivative.')
         else:
-            logger.info('Unable to create word tables as there is no connection.')
+            logger.debug('Unable to create word tables as there is no connection.')
 
     def word_list_insertion(self, conn):
         """
@@ -153,26 +158,33 @@ class Database:
         :param conn:
         """
 
-        self.config.read('Config/words.ini')
+        logger.info('Starting word_list_insertion.')
 
-        # Splits strings from words.ini into usable lists
-        self.universal = (self.config['Words']['universal']).split(', ')
-        self.universal_derogatory = (self.config['Derogatory']['universal']).split(', ')
-        self.brit_aus = (self.config['Words']['brit_aus']).split(', ')
-        self.brit_aus_derogatory = (self.config['Derogatory']['brit_aus']).split(', ')
-        self.other = (self.config['Words']['other']).split(', ')
+        try:
+            self.config.read('Config/words.ini')
 
-        # Creates list of list
-        cusswords_list = [
-            self.universal,
-            self.universal_derogatory,
-            self.brit_aus,
-            self.brit_aus_derogatory,
-            self.other
-            ]
+            # Splits strings from words.ini into usable lists
+            self.universal = (self.config['Words']['universal']).split(', ')
+            self.universal_derogatory = (self.config['Derogatory']['universal']).split(', ')
+            self.brit_aus = (self.config['Words']['brit_aus']).split(', ')
+            self.brit_aus_derogatory = (self.config['Derogatory']['brit_aus']).split(', ')
+            self.other = (self.config['Words']['other']).split(', ')
 
-        for word_list in cusswords_list:
-            self.insert_list_into_db(conn, word_list)
+            # Creates list of lists
+            cusswords_list = [
+                self.universal,
+                self.universal_derogatory,
+                self.brit_aus,
+                self.brit_aus_derogatory,
+                self.other
+                ]
+
+            for word_list in cusswords_list:
+                self.insert_list_into_db(conn, word_list)
+
+            logger.debug('Successfully created and inserted cusswords_list into database.')
+        except:
+            logger.debug('Failed to create and insert cusswords_list into database.')
 
     def insert_list_into_db(self, conn, word_list):
         """
@@ -181,6 +193,8 @@ class Database:
         :param conn:
         :param word_list:
         """
+
+        logger.info('Starting insert_list_into_db.')
 
         if conn is not None:
 
@@ -193,6 +207,8 @@ class Database:
 
                 self. execute_sql_no_return(conn, sql_insert_into_cussword)
 
+        logger.debug('Successfully inserted word_list into database.')
+
     def property_assigner(self, word):
         """
         Assigns each word a property.
@@ -201,6 +217,8 @@ class Database:
         :return: dialect and derogatory properties
         :rtype: tuple
         """
+
+        logger.info('Starting property_assigner.')
 
         # Sets dialect and derogatory values
         if word in self.universal:
@@ -221,6 +239,8 @@ class Database:
         else:
             logger.info(f'The word {word} does not appear in any list.')
 
+        logger.debug('Successfully assigned dialect and derogatory value to word.')
+
         return dialect, derogatory
 
     def property_insertion(self, conn):
@@ -234,12 +254,15 @@ class Database:
         SELECT * FROM cussword 
         """
 
+        logger.info('Starting property_insertion.')
+
         rows = self.execute_select(conn, select_all_from_cussword)
 
         for row in rows:
             word_id = row[0]
             word = row[1]
 
+            # Assigns dialect and derogatory value to each word
             word_properties = self.property_assigner(word)
             dialect = word_properties[0]
             derogatory = word_properties[1]
@@ -260,12 +283,16 @@ class Database:
             # Insert derogatory property value into table
             self.execute_sql_no_return(conn, insert_derogatory_query)
 
+        logger.debug('Successfully inserted properties into database.')
+
     def derivative_insertion(self, conn):
         """
         Checks Words.ini for each word that has derivatives, then adds the derivatives into derivative table
 
         :param conn:
         """
+
+        logger.info('Starting derivative_insertion.')
 
         # Read config file
         self.config.read('Config/words.ini')
@@ -292,6 +319,8 @@ class Database:
 
                     self.execute_sql_no_return(conn, insert_derivative_query)
 
+        logger.debug('Successfully inserted derivatives into database.')
+
     def append_scraper_words(self, word_list, dialect, derogatory):
         """
         Adds words to word_list that match the dialect and derogatory value passed to this method.
@@ -302,6 +331,8 @@ class Database:
         :return: word_list
         :rtype: list
         """
+
+        logger.info('Starting append_scraper_words.')
 
         select_specified_query = f"""
 SELECT word FROM cussword
@@ -323,10 +354,12 @@ SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_val
 
         # Appends words to word_list
 
-        logger.info(f"Select query returned the following rows: \n {rows}")
+        logger.debug(f"Select query returned the following rows: \n {rows}")
 
         for row in rows:
             word_list.append(row[0])
+
+        logger.debug('Successfully appended specified words to word_list.')
 
         return word_list
 
@@ -338,6 +371,8 @@ SELECT word_id FROM property WHERE property_name = 'derogatory' AND property_val
         :return: word_list
         :rtype: list
         """
+
+        logger.info('Starting append_derivatives.')
 
         # Creates connection to db
         conn = self.create_connection(self.db_directory)
@@ -366,6 +401,8 @@ WHERE c.word = \'{word}\'
 
         # Closes db
         self.close_conn(conn)
+
+        logger.debug('Successfully appended derivatives to word_list.')
 
         return word_list
 
