@@ -1,13 +1,33 @@
 # CussBot
 
-Cussbot looks on Reddit for comments with swear words in them. It analyzes the comment
-and additional comments made by the user for swearing statistics and saves this information 
-to a database. This information is anonymous as per below. 
+Cussbot looks on Reddit for comments with swear words in them. It stores subreddit
+and user statistics for later analysis. See Comment Analysis section for further 
+details.
 
-# Anonymous Data
+# Data collection
 
-The only information stored permanently are the username to prevent duplicate analysis, 
-and the resulting statistics. Comments are not stored as this would be redundant.
+Complete comments are not stored as this would take up a large amount of data in the
+database. This bot stores the comment id to prevent duplication, and statistical data
+about the comment body. 
+
+# Purpose
+
+The purpose of this bot is frankly to improve my Python knowledge. I learned how to 
+write Python, but I wanted to do a solo project to learn the entire process of creating 
+a project from scratch. I don't intend to sell the data. The end result will be the 
+analysis of different subreddits on reddit for their swearword usage. Once I have 
+sufficiently analyzed enough subreddits, I will be plotting the data and will publish 
+it to Reddit. 
+
+# Known flaws
+
+There are tons of known flaws. I have only used SQL in a professional environment during
+my coop term many years ago, and am consequently relearning it from scratch. The SQL in
+this project is rife with issues that probably open it to SQL injection attacks as well as
+unintentional SQL injection from regular usage. I plan to tackle this later on as the bot
+becomes more functional. There are probably many other flaws I haven't found yet in the
+program, but I'm using the experience I gain from this project to make better projects
+which are less vulnerable in the future.
 
 ## Procedure
 
@@ -46,7 +66,7 @@ error has been made.
 ## Database
 
 CussBot uses the SQLite3 database. The cussbot.db database file is stored in the Sqlite3
-folder, where the Database.py script expects to find it. 
+folder. If it doesn't exist, Database.py creates it during the first startup.
 
 ### ++ Tables ++
 
