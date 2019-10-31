@@ -150,6 +150,7 @@ class Scraper:
         :param dialect:
         :param derogatory:
         """
+
         self.scraper_words = Database.append_scraper_words(self.database, self.scraper_words, dialect, derogatory)
         logger.info(f'Scraper has appended dialect: \'{dialect}\', derogatory: \'{derogatory}\'')
 
