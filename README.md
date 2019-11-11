@@ -72,7 +72,9 @@ folder. If it doesn't exist, Database.py creates it during the first startup.
 
 #### Words (3 tables)
 
-cusswords
+##### cussword
+
+Purpose: Stores unique cusswords.
 
 | id (Primary Key)| word  |
 | --------------- | ----- |
@@ -80,20 +82,59 @@ cusswords
 | 2               | arse  |
 | 3               | fuck  |
 
-property
+##### property
+
+Purpose: Stores properties for the words in cussword.
 
 | word_id | property_name | property_value |
 | ------- | ------------- | -------------- |
 | 2       | derogatory    | false          |
 | 2       | dialect       | british        |
 
-derivatives
+##### derivative
+
+Purpose: Stores derivatives of words in cussword.
 
 | word_id | child_word   |
 | ------- | ------------ |
 | 3       | fucker       |
 | 3       | motherfucker | 
 
+#### Reddit Comment Data
+
+##### comment
+
+Purpose: Stores comment "reddit data".
+
+| id (Primary Key) | comment_id | user_name | Subreddit |
+|------------------|------------|-----------|-----------|
+| 1                | example    |example    |example    |
+| 2                | example    |example    |example    |
+
+##### word_count
+
+Purpose: Stores unique cusswords used in comment, and each word's count.
+Note: word_id is the id from cussword.
+
+| id         | word_id    | count     |
+|------------|------------|-----------|
+| 1          | example    |example    |
+| 2          | example    |example    |
+
+##### percentage
+
+Purpose: Stores the count of cusswords, normal words, and the ratio of the two.
+
+| id         | cuss_amount | user_name | Subreddit |
+|------------|-------------|-----------|-----------|
+| 1          | example    |example    |example    |
+| 2          | example    |example    |example    |
+
+
+
+##### subreddit
+
+| id               | 
 
 # Contributing
 
