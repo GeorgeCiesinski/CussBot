@@ -125,16 +125,10 @@ Note: word_id is the id from cussword.
 
 Purpose: Stores the count of cusswords, normal words, and the ratio of the two.
 
-| id         | cuss_amount | user_name | Subreddit |
-|------------|-------------|-----------|-----------|
-| 1          | example    |example    |example    |
-| 2          | example    |example    |example    |
-
-
-
-##### subreddit
-
-| id               | 
+| id         | cuss_amount | normal_amount | ratio  |
+|------------|-------------|---------------|--------|
+| 1          | example     |example        |example |
+| 2          | example     |example        |example |
 
 # Contributing
 
